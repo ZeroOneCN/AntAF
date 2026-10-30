@@ -163,6 +163,8 @@ function currentSuggestion() {
 export function drawMembers(el, actions) {
   el.innerHTML = "";
 
+  const pending = state.records[0] && !state.records[0].user_id ? state.records[0] : null;
+
   const suggest = currentSuggestion();
   if (suggest) {
     const chip = document.createElement("button");
@@ -177,8 +179,22 @@ export function drawMembers(el, actions) {
     el.appendChild(chip);
   }
 
+  if (pending) {
+    const discard = document.createElement("button");
+    discard.type = "button";
+    discard.className = "member-chip member-discard";
+    discard.title = `放弃这条测量：${fmtWeight(pending.kg)} kg · ${fmtMoment(pending.ts)}`;
+    discard.setAttribute("aria-label", discard.title);
+    discard.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg><span class="discard-label">放弃本次</span>`;
+    discard.addEventListener("click", () => actions.discardRecord(pending));
+    el.appendChild(discard);
+  }
+
   if (!state.users.length) {
-    el.innerHTML = '<div class="list-empty">暂无成员，点击右侧按钮添加</div>';
+    const empty = document.createElement("div");
+    empty.className = "list-empty";
+    empty.textContent = "暂无成员，点击右侧按钮添加";
+    el.appendChild(empty);
     return;
   }
 

@@ -7,6 +7,7 @@ import {
   closeModal,
   openUserModal,
   openAssignModal,
+  openDiscardRecord,
   openDeleteRecord,
   openDeleteUser,
 } from "./modal.js";
@@ -37,7 +38,10 @@ const actions = {
     renderAll(el, actions);
   },
   assignRecord(record) {
-    openAssignModal(record, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot, toastFn);
+    openAssignModal(record, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot, toastFn, actions.discardRecord);
+  },
+  discardRecord(record) {
+    openDiscardRecord(record, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot);
   },
   deleteRecord(record) {
     openDeleteRecord(record, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot);

@@ -658,6 +658,40 @@ svg { display: block; }
   background: rgba(41, 151, 255, 0.22);
 }
 
+.member-chip.member-discard {
+  gap: 8px;
+  padding: 0 18px;
+  min-height: 60px;
+  border-color: rgba(255, 59, 48, 0.3);
+  background: rgba(255, 59, 48, 0.07);
+  color: var(--bad);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.member-chip.member-discard:hover {
+  border-color: var(--bad);
+  background: rgba(255, 59, 48, 0.12);
+  box-shadow: 0 6px 18px rgba(255, 59, 48, 0.16);
+}
+
+[data-theme="dark"] .member-chip.member-discard {
+  border-color: rgba(255, 69, 58, 0.42);
+  background: rgba(255, 69, 58, 0.14);
+}
+
+[data-theme="dark"] .member-chip.member-discard:hover {
+  border-color: #ff6961;
+  background: rgba(255, 69, 58, 0.22);
+  box-shadow: 0 6px 18px rgba(255, 69, 58, 0.24);
+}
+
+.member-discard svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
 .suggest-check {
   width: 42px;
   height: 42px;
@@ -1326,6 +1360,8 @@ svg { display: block; }
   .member-info .member-time { display: none; }
   .member-add { min-height: 52px; padding: 0 14px; font-size: 15px; }
   .member-add span { display: none; }
+  .member-chip.member-discard { min-height: 48px; padding: 0 12px; }
+  .member-discard .discard-label { display: none; }
 
   .drawer-toggle { width: 50px; height: 84px; right: 10px; }
   .drawer-toggle.is-open { right: 10px; }
@@ -1341,7 +1377,7 @@ svg { display: block; }
   .clock-date { font-size: 11px; }
   .pill { padding: 5px 9px; font-size: 11px; }
   .member-info .member-time { display: none; }
-  .member-suggest .member-info span { font-size: 11px; }
+  .member-suggest .member-info span { display: none; }
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
@@ -1983,6 +2019,9 @@ svg { display: block; }
 .btn:active { transform: scale(0.95); }
 .btn-primary { background: var(--primary); }
 .btn-ghost { background: var(--canvas-parchment); color: var(--ink); }
+.btn-ghost.is-danger { color: var(--bad); }
+.btn-ghost.is-danger:hover { background: rgba(255, 59, 48, 0.1); }
+[data-theme="dark"] .btn-ghost.is-danger:hover { background: rgba(255, 69, 58, 0.16); }
 .btn-sm { padding: 8px 15px; font-size: 14px; }
 .btn-xs { padding: var(--space-xs) var(--space-sm); font-size: 12px; }
 .btn-danger { background: var(--bad); }

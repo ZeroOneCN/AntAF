@@ -76,12 +76,16 @@ export function openUserModal(user, openModalFn, closeModalFn, modalLayer, modal
   });
 }
 
-export function openAssignModal(record, openModalFn, closeModalFn, modalLayer, modalTitle, modalBody, modalFoot, toastFn) {
+export function openAssignModal(record, openModalFn, closeModalFn, modalLayer, modalTitle, modalBody, modalFoot, toastFn, onDiscard) {
   if (!record) return;
   if (!state.users.length) {
     toastFn("warn", "还没有成员档案，请先新增成员");
     return;
   }
+  const discardBtn =
+    !record.user_id && onDiscard
+      ? '<button class="btn btn-ghost is-danger" type="button" data-act="discard">放弃这条记录</button>'
+      : "";
   openModalFn(
     `归属这条记录 · ${fmtWeight(record.kg)} kg`,
     `<p class="modal-note">秤无法识别「这次是谁」，请手动归档；归属后体成分按该成员资料重算。</p>
@@ -96,7 +100,7 @@ export function openAssignModal(record, openModalFn, closeModalFn, modalLayer, m
        .join("")}
        <button type="button" data-pick="" style="--mc:#7a7a7a"><span class="face">×</span><span>取消归属</span></button>
      </div>`,
-    `<button class="btn btn-ghost" type="button" data-act="cancel">关闭</button>`,
+    `${discardBtn}<button class="btn btn-ghost" type="button" data-act="cancel">关闭</button>`,
     modalLayer,
     modalTitle,
     modalBody,
@@ -108,7 +112,35 @@ export function openAssignModal(record, openModalFn, closeModalFn, modalLayer, m
       closeModalFn(modalLayer, modalBody, modalFoot);
     })
   );
+  const discard = modalFoot.querySelector('[data-act="discard"]');
+  if (discard)
+    discard.addEventListener("click", () => {
+      closeModalFn(modalLayer, modalBody, modalFoot);
+      onDiscard(record);
+    });
   modalFoot.querySelector('[data-act="cancel"]').addEventListener("click", () => closeModalFn(modalLayer, modalBody, modalFoot));
+}
+
+export function openDiscardRecord(record, openModalFn, closeModalFn, modalLayer, modalTitle, modalBody, modalFoot) {
+  if (!record) return;
+  openModalFn(
+    "放弃这次测量？",
+    `<p class="modal-note"><b>${esc(fmtStamp(record.ts))}</b> · <b>${fmtWeight(record.kg)} kg</b>${
+      record.user_name ? ` · ${esc(record.user_name)}` : ""
+    }<br>放弃后这条记录会被删除，不计入趋势与成员统计，且不可恢复。</p>`,
+    `<button class="btn btn-ghost" type="button" data-act="cancel">取消</button>
+      <button class="btn btn-danger" type="button" data-act="ok">放弃</button>`,
+    modalLayer,
+    modalTitle,
+    modalBody,
+    modalFoot
+  );
+  modalFoot.querySelector('[data-act="cancel"]').addEventListener("click", () => closeModalFn(modalLayer, modalBody, modalFoot));
+  modalFoot.querySelector('[data-act="ok"]').addEventListener("click", () => {
+    send({ type: "delete_record", record_id: record.id });
+    if (state.selectedId === record.id) state.selectedId = null;
+    closeModalFn(modalLayer, modalBody, modalFoot);
+  });
 }
 
 export function openDeleteRecord(record, openModalFn, closeModalFn, modalLayer, modalTitle, modalBody, modalFoot) {
