@@ -1,124 +1,95 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="dark">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>体重中枢 · 体成分 | 蚂蚁阿福秤</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' fill='none' stroke='%2300E5C0' stroke-width='1.6'/%3E%3Cpath d='M8.5 10a3.5 3.5 0 0 1 7 0v5' fill='none' stroke='%2300E5C0' stroke-width='1.6'/%3E%3C/svg%3E">
-<script>
-  (function () {
-    var saved = localStorage.getItem("antaf-theme");
-    document.documentElement.dataset.theme = saved === "light" ? "light" : "dark";
-  })();
-</script>
-<link rel="stylesheet" href="/static/weight.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f5f5f7">
+<title>体重中枢 · 蚂蚁阿福秤</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='3' width='18' height='18' rx='5' fill='none' stroke='%230066cc' stroke-width='2'/%3E%3Cpath d='M8.5 10a3.5 3.5 0 0 1 7 0v5' fill='none' stroke='%230066cc' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">
-    <span class="brand-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <path d="M8.5 10a3.5 3.5 0 0 1 7 0v5"/>
-      </svg>
-    </span>
-    <div class="brand-text">
-      <h1>体重中枢</h1>
-      <p>Weight Lab · BIA Telemetry</p>
-    </div>
+
+<!-- 顶部状态栏 -->
+<header class="top-bar">
+  <div class="clock-display">
+    <span class="clock-time" id="clockTime">--:--</span>
+    <span class="clock-date" id="clockDate">----</span>
   </div>
-  <div class="top-actions">
-    <span id="wsBadge" class="badge badge-wait"><span class="dot"></span><span id="wsText">连接中</span></span>
-    <span id="scaleBadge" class="badge badge-wait"><span class="dot"></span><span id="scaleText">秤离线</span></span>
-    <button id="fullscreenBtn" class="icon-btn" type="button" title="全屏显示" aria-label="全屏显示">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
-      </svg>
-    </button>
-    <button id="themeBtn" class="icon-btn" type="button" title="切换主题" aria-label="切换主题">
-      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg>
-    </button>
+  <div class="status-pills">
+    <span class="pill pill-live" id="wsPill"><i class="dot"></i><span id="wsText">实时通道</span></span>
+    <span class="pill pill-idle" id="scalePill"><i class="dot"></i><span id="scaleText">秤已连接</span></span>
   </div>
 </header>
 
-<main class="dash">
-  <section class="card hero-card">
-    <header class="card-head">
-      <h2><span class="idx">01</span>实时测量</h2>
-      <span id="weightState" class="badge badge-wait"><span class="dot"></span><span id="weightStateText">等待称重</span></span>
-    </header>
-    <div class="hero-grid">
-      <div class="hero-main">
-        <div class="weight-row">
-          <span id="weightValue" class="weight-value idle" aria-live="polite">--</span>
-          <span class="weight-unit">KG</span>
-        </div>
-        <p id="weightHint" class="weight-hint">踩一下秤唤醒它，再光脚站上去称重。</p>
-        <dl class="hero-meta">
-          <div class="meta-item"><dt>设备</dt><dd id="weightDevice">--</dd></div>
-          <div class="meta-item"><dt>原始值</dt><dd id="weightRaw">--</dd></div>
-          <div class="meta-item"><dt>阻抗</dt><dd id="weightImpedance">--</dd></div>
-          <div class="meta-item"><dt>时间</dt><dd id="weightTime">--</dd></div>
-        </dl>
-      </div>
-      <div class="assign-panel">
-        <div class="assign-head">
-          <span class="assign-title">本次归属</span>
-          <span id="assignState" class="assign-state is-empty">暂无记录</span>
-        </div>
-        <p class="assign-tip">先称重，再选择成员，把这条记录归档到对应档案。</p>
-        <div id="assignChips" class="user-chips"></div>
-      </div>
-    </div>
-  </section>
+<!-- 主画布：径向布局 -->
+<main class="board">
 
-  <section class="card members-card">
-    <header class="card-head">
-      <h2><span class="idx">02</span>成员档案</h2>
-      <button id="addUserBtn" class="btn btn-sm" type="button">新增成员</button>
-    </header>
-    <ul id="userList" class="user-list"></ul>
-    <p class="card-hint">体成分按每位成员的身高、年龄与性别独立估算，记录归属可随时修改。</p>
-  </section>
+  <!-- 中心体重显示 -->
+  <div class="center-weight">
+    <div class="big-num" id="weightValue">--</div>
+    <div class="unit">kg</div>
+    <div class="time-badge" id="weightTime">上次测量 · --</div>
+  </div>
 
-  <section class="card records-card">
-    <header class="card-head">
-      <h2><span class="idx">03</span>测量记录</h2>
-      <span id="recordCount" class="micro-tag">0 条</span>
-    </header>
-    <ul id="recordList" class="record-list"></ul>
-  </section>
+  <!-- 轨道卡片 - BMI -->
+  <div class="orbit-card orbit-bmi" id="cardBMI">
+    <div class="orbit-label">BMI</div>
+    <div class="orbit-value" id="bmiValue">--</div>
+    <div class="orbit-grade" id="bmiGrade" data-tone="ok">标准</div>
+  </div>
 
-  <section class="card comp-card">
-    <header class="card-head">
-      <h2><span class="idx">04</span>身体成分</h2>
-      <div class="comp-head-meta">
-        <span id="compContext" class="micro-tag">暂无记录</span>
-        <span class="micro-tag">BIA · <span id="compCount">0</span> 项</span>
-      </div>
-    </header>
-    <div id="compGrid" class="comp-grid" hidden></div>
-    <p id="compEmpty" class="comp-empty">站上秤并测到阻抗后，这里会显示 18 项身体成分。</p>
-    <p class="disclaimer">体成分为 BIA 估算值，阻抗受脚底湿度、站姿与袜子影响较大，不能用于医学诊断。</p>
-  </section>
+  <!-- 轨道卡片 - 体脂率 -->
+  <div class="orbit-card orbit-fat" id="cardFat">
+    <div class="orbit-label">体脂率</div>
+    <div class="orbit-value" id="fatValue">--<small class="orbit-unit">%</small></div>
+    <div class="orbit-grade" id="fatGrade" data-tone="warn">偏高</div>
+  </div>
+
+  <!-- 轨道卡片 - 肌肉量 -->
+  <div class="orbit-card orbit-muscle" id="cardMuscle">
+    <div class="orbit-label">肌肉量</div>
+    <div class="orbit-value" id="muscleValue">--<small class="orbit-unit">kg</small></div>
+    <div class="orbit-grade" id="muscleGrade" data-tone="ok">标准</div>
+  </div>
+
+  <!-- 轨道卡片 - 水分率 -->
+  <div class="orbit-card orbit-water" id="cardWater">
+    <div class="orbit-label">水分率</div>
+    <div class="orbit-value" id="waterValue">--<small class="orbit-unit">%</small></div>
+    <div class="orbit-grade" id="waterGrade" data-tone="ok">标准</div>
+  </div>
+
+  <!-- 抽屉切换按钮 -->
+  <button class="drawer-toggle" id="drawerToggle" type="button" title="查看详细指标" aria-label="查看详细指标">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+  </button>
+
 </main>
 
-<div id="modalLayer" class="modal-layer" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <header class="modal-head">
-      <h3 id="modalTitle">新增成员</h3>
-      <button id="modalClose" class="icon-btn" type="button" title="关闭" aria-label="关闭">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-          <path d="M6 6l12 12M18 6l-12 12"/>
-        </svg>
-      </button>
-    </header>
-    <div id="modalBody" class="modal-body"></div>
-    <footer id="modalFoot" class="modal-foot"></footer>
+<!-- 底部成员列表 -->
+<footer class="bottom-members">
+  <div class="members-scroll" id="memberList">
+    <!-- 动态生成成员芯片 -->
   </div>
-</div>
+</footer>
 
-<div id="toasts" class="toasts" aria-live="polite"></div>
-<script src="/static/weight.js"></script>
+<!-- 详细指标抽屉 -->
+<aside class="metrics-drawer" id="metricsDrawer">
+  <h2 class="panel-title">全部身体成分</h2>
+  <div class="metrics-grid" id="metricsGrid">
+    <!-- 动态生成所有指标 -->
+  </div>
+</aside>
+
+<!-- 提示条 -->
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="/static/js/bundle.js" defer></script>
 </body>
 </html>

@@ -25,14 +25,16 @@ from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 
-from weight.records import WeightStore
+from weight.db import Database
 from weight.scale_reader import ScaleReader
 
 BASE_DIR = Path(__file__).resolve().parent
 # 前端静态资源目录
 WEB_DIR = BASE_DIR / "weight" / "web"
-# 成员档案与测量记录的默认持久化路径
-WEIGHT_STORE_PATH = BASE_DIR / "weight" / "weight_store.json"
+# SQLite 数据库默认路径
+DB_PATH = BASE_DIR / "weight" / "antaf.db"
+# 旧 JSON 文件路径（首次运行时迁移）
+JSON_PATH = BASE_DIR / "weight" / "weight_store.json"
 
 # 超过该秒数未再收到广播的设备会从列表移除
 STALE_SECONDS = 120
@@ -50,7 +52,8 @@ class ScaleHub:
         scale_height: int = 173,
         scale_age: int = 25,
         scale_sex: str = "male",
-        weight_store: str | Path = WEIGHT_STORE_PATH,
+        db_path: str | Path = DB_PATH,
+        json_path: str | Path = JSON_PATH,
     ) -> None:
         """初始化集线器。
 
@@ -60,13 +63,15 @@ class ScaleHub:
             scale_height: 首个成员的身高（厘米），用于触发阻抗测量与体成分估算。
             scale_age: 首个成员的年龄（岁）。
             scale_sex: 首个成员的性别，male 或 female。
-            weight_store: 测量记录与成员档案的持久化文件路径。
+            db_path: SQLite 数据库文件路径。
+            json_path: 旧 JSON 文件路径（首次运行时迁移）。
         """
-        self.store = WeightStore(
-            path=weight_store,
+        self.store = Database(
+            db_path=db_path,
             default_height_cm=scale_height,
             default_age=scale_age,
             default_sex=scale_sex,
+            json_path=json_path,
         )
         profile = self.store.active_profile()
         self.scale = (
@@ -627,9 +632,14 @@ def parse_args() -> argparse.Namespace:
         help="首个成员的性别，默认 male",
     )
     parser.add_argument(
-        "--weight-store",
-        default=str(WEIGHT_STORE_PATH),
-        help="成员档案与测量记录的持久化文件路径",
+        "--db",
+        default=str(DB_PATH),
+        help="SQLite 数据库文件路径",
+    )
+    parser.add_argument(
+        "--json",
+        default=str(JSON_PATH),
+        help="旧 JSON 文件路径（首次运行时迁移）",
     )
     return parser.parse_args()
 
@@ -648,7 +658,8 @@ def main() -> None:
         scale_height=args.scale_height,
         scale_age=args.scale_age,
         scale_sex=args.scale_sex,
-        weight_store=args.weight_store,
+        db_path=args.db,
+        json_path=args.json,
     )
     app = build_app(hub, token=args.token)
     logging.info("访问地址：")
