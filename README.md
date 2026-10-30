@@ -171,8 +171,8 @@ requirements.txt           Python 依赖
 
 ## 参考
 
-- [ant-afu-scale 社区实现](https://github.com/oliexdev/openScale)（BIA 公式与分级阈值的移植来源）
-- `ha-miscale2`、`icomon_scale`（体成分公式与分级口径）
+- `ha-miscale2`、`icomon_scale`：体成分公式与分级口径
+- `ant-afu-welland-scale`：蚂蚁阿福秤协议与体成分实现
 - Mifflin-St Jeor 基础代谢公式（1990）
 
 ## 免责声明
