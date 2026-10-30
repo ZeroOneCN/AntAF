@@ -76,7 +76,11 @@ export function drawBodyComposition() {
     document.getElementById("cardFat").hidden = true;
     document.getElementById("cardMuscle").hidden = true;
     document.getElementById("cardWater").hidden = true;
-    document.getElementById("metricsGrid").innerHTML = '<p class="drawer-empty">这条记录没有阻抗数据，暂无可估算的身体成分。</p>';
+    const message =
+      v.mode === "empty"
+        ? "暂无测量数据，先站上秤完成一次称重。"
+        : "这条记录没有阻抗数据，暂无可估算的身体成分。";
+    document.getElementById("metricsGrid").innerHTML = `<p class="drawer-empty">${message}</p>`;
     return;
   }
 
@@ -147,11 +151,11 @@ function drawMetricsGrid(body) {
   });
 }
 
-export function drawMembers(el, onChange) {
+export function drawMembers(el, actions) {
   el.innerHTML = "";
 
   if (!state.users.length) {
-    el.innerHTML = '<div style="padding: var(--space-md); color: var(--ink-muted-48); font-size: 14px;">暂无成员，点击右下角按钮添加</div>';
+    el.innerHTML = '<div class="list-empty">暂无成员，点击右侧按钮添加</div>';
     return;
   }
 
@@ -166,39 +170,56 @@ export function drawMembers(el, onChange) {
 
     const info = document.createElement("div");
     info.className = "member-info";
-    const latest = state.records.find(r => r.user_id === user.id);
-    info.innerHTML = `<b>${esc(user.name)}</b><span>${latest ? fmtWeight(latest.kg) + " · " + ago(latest.ts) : "无记录"}</span>`;
+    const latest = state.records.find((record) => record.user_id === user.id);
+    info.innerHTML = `<b>${esc(user.name)}</b><span>${latest ? `${fmtWeight(latest.kg)} kg · ${ago(latest.ts)}` : "暂无记录"}</span>`;
+
+    const remove = document.createElement("button");
+    remove.className = "member-remove";
+    remove.type = "button";
+    remove.title = `删除成员 ${user.name}`;
+    remove.setAttribute("aria-label", `删除成员 ${user.name}`);
+    remove.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"/></svg>';
+
+    remove.addEventListener("click", (event) => {
+      event.stopPropagation();
+      actions.deleteUser(user);
+    });
 
     chip.appendChild(avatar);
     chip.appendChild(info);
+    chip.appendChild(remove);
 
     chip.addEventListener("click", () => {
       state.filterUser = state.filterUser === user.id ? null : user.id;
       state.selectedId = state.filterUser && latest ? latest.id : null;
-      onChange();
+      actions.refresh();
     });
 
     el.appendChild(chip);
   });
 }
 
-export function drawRecords(el, onChange) {
+export function drawRecords(el, actions) {
   el.innerHTML = "";
 
   let records = [...state.records];
   if (state.filterUser) {
-    records = records.filter(r => r.user_id === state.filterUser);
+    records = records.filter((record) => record.user_id === state.filterUser);
   }
 
   if (!records.length) {
-    el.innerHTML = '<div style="padding: var(--space-md); color: var(--ink-muted-48); font-size: 14px; text-align: center;">暂无记录</div>';
+    el.innerHTML = '<div class="list-empty">暂无测量记录</div>';
     return;
   }
 
   records.slice(0, 50).forEach((rec) => {
-    const row = document.createElement("button");
+    const row = document.createElement("div");
     row.className = `record ${state.selectedId === rec.id ? "is-active" : ""}`;
-    row.type = "button";
+
+    const main = document.createElement("button");
+    main.className = "record-main";
+    main.type = "button";
 
     const time = document.createElement("span");
     time.className = "time";
@@ -211,7 +232,7 @@ export function drawRecords(el, onChange) {
     const owner = document.createElement("span");
     owner.className = "owner";
     if (rec.user_name) {
-      const user = state.users.find(u => u.id === rec.user_id);
+      const user = state.users.find((item) => item.id === rec.user_id);
       owner.innerHTML = `<i class="bead" style="--mc: ${user?.color || "#999"}"></i>${esc(rec.user_name)}`;
     } else {
       owner.innerHTML = '<em class="none">未归属</em>';
@@ -223,16 +244,38 @@ export function drawRecords(el, onChange) {
       flags.innerHTML = `<span class="mini on">${num(rec.impedance, 0)}Ω</span>`;
     }
 
-    row.appendChild(time);
-    row.appendChild(kg);
-    row.appendChild(owner);
-    row.appendChild(flags);
+    main.appendChild(time);
+    main.appendChild(kg);
+    main.appendChild(owner);
+    main.appendChild(flags);
 
-    row.addEventListener("click", () => {
+    main.addEventListener("click", () => {
       state.selectedId = rec.id;
-      onChange();
+      actions.refresh();
     });
 
+    const ops = document.createElement("div");
+    ops.className = "record-ops";
+
+    const assign = document.createElement("button");
+    assign.className = "record-action";
+    assign.type = "button";
+    assign.textContent = "归属";
+    assign.title = "修改这条记录的成员归属";
+    assign.addEventListener("click", () => actions.assignRecord(rec));
+
+    const remove = document.createElement("button");
+    remove.className = "record-action is-danger";
+    remove.type = "button";
+    remove.title = "删除这条测量记录";
+    remove.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"/></svg><span>删除</span>';
+    remove.addEventListener("click", () => actions.deleteRecord(rec));
+
+    ops.appendChild(assign);
+    ops.appendChild(remove);
+    row.appendChild(main);
+    row.appendChild(ops);
     el.appendChild(row);
   });
 }
@@ -250,11 +293,10 @@ export function drawStatus(el) {
   el.scaleText.textContent = state.scale.connected ? "秤已连接" : "秤离线";
 }
 
-export function renderAll(el) {
-  const refresh = () => renderAll(el);
+export function renderAll(el, actions) {
   drawHero(el);
   drawBodyComposition();
-  drawMembers(document.getElementById("memberList"), refresh);
-  drawRecords(document.getElementById("recordList"), refresh);
+  drawMembers(document.getElementById("memberList"), actions);
+  drawRecords(document.getElementById("recordList"), actions);
   drawStatus(el);
 }

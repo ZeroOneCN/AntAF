@@ -1,7 +1,14 @@
 import { state } from "./state.js";
 import { renderAll } from "./render.js";
 import { connect, handleMessage, send, toast } from "./ws.js";
-import { openModal, closeModal, openUserModal } from "./modal.js";
+import {
+  openModal,
+  closeModal,
+  openUserModal,
+  openAssignModal,
+  openDeleteRecord,
+  openDeleteUser,
+} from "./modal.js";
 import { initThreeEffects } from "./three-effects.js";
 
 const $ = (id) => document.getElementById(id);
@@ -23,6 +30,21 @@ function initElements() {
 function toastFn(level, text) {
   toast(level, text, el.toasts);
 }
+
+const actions = {
+  refresh() {
+    renderAll(el, actions);
+  },
+  assignRecord(record) {
+    openAssignModal(record, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot, toastFn);
+  },
+  deleteRecord(record) {
+    openDeleteRecord(record, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot);
+  },
+  deleteUser(user) {
+    openDeleteUser(user, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot);
+  },
+};
 
 function tickClock() {
   const now = new Date();
@@ -53,7 +75,7 @@ function setDrawerOpen(open) {
 
 function onMessage(data) {
   handleMessage(data, toastFn);
-  renderAll(el);
+  renderAll(el, actions);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -87,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
       tickClock();
-      renderAll(el);
+      renderAll(el, actions);
     }
   });
 
@@ -105,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
   connect(onMessage, toastFn);
   tickClock();
   setInterval(tickClock, 10_000);
-  renderAll(el);
+  renderAll(el, actions);
 });
 
 window.__antaf = { push: onMessage, state, send };

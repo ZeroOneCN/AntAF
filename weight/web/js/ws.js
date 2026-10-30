@@ -1,4 +1,4 @@
-import { state } from "./state.js";
+import { state, recordById } from "./state.js";
 import { esc } from "./utils.js";
 
 const PING_EVERY_MS = 20_000;
@@ -86,10 +86,6 @@ export function handleMessage(data, onToast) {
       break;
     }
   }
-}
-
-function recordById(id) {
-  return state.records.find((r) => r.id === id) || null;
 }
 
 function notify(text, level, onToast) {
