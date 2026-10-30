@@ -89,13 +89,13 @@ svg { display: block; }
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: clamp(280px, 35vmin, 420px);
-  height: clamp(280px, 35vmin, 420px);
+  width: clamp(320px, 42vmin, 500px);
+  height: clamp(320px, 42vmin, 500px);
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f5f5f7 60%, #e8eaed 100%);
   border: 2px solid rgba(255, 255, 255, 0.8);
   box-shadow: 
-    0 25px 80px rgba(0, 0, 0, 0.1),
+    0 30px 100px rgba(0, 0, 0, 0.12),
     0 0 0 1px rgba(0, 0, 0, 0.03),
     inset 0 2px 20px rgba(255, 255, 255, 0.9);
   display: flex;
@@ -106,6 +106,21 @@ svg { display: block; }
   animation: float 6s ease-in-out infinite;
 }
 
+/* 装饰性外环 */
+.center-weight::before {
+  content: '';
+  position: absolute;
+  inset: -15px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 102, 204, 0.15);
+  animation: ring-pulse 4s ease-in-out infinite;
+}
+
+@keyframes ring-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.05); opacity: 0.6; }
+}
+
 @keyframes float {
   0%, 100% { transform: translate(-50%, -50%) translateY(0); }
   50% { transform: translate(-50%, -50%) translateY(-8px); }
@@ -113,19 +128,20 @@ svg { display: block; }
 
 .center-weight .big-num {
   font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
-  font-size: clamp(72px, 10vmin, 120px);
-  font-weight: 700;
-  letter-spacing: -0.05em;
+  font-size: clamp(80px, 12vmin, 140px);
+  font-weight: 800;
+  letter-spacing: -0.06em;
   line-height: 1;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
 .center-weight .unit {
-  font-size: clamp(18px, 2.5vmin, 28px);
-  font-weight: 400;
+  font-size: clamp(20px, 3vmin, 32px);
+  font-weight: 500;
   color: var(--ink-muted-48);
-  margin-top: var(--space-xs);
+  margin-top: var(--space-sm);
+  letter-spacing: -0.02em;
 }
 
 .center-weight .time-badge {
@@ -166,26 +182,64 @@ svg { display: block; }
   z-index: 15;
 }
 
-/* 身体成分指标位置 - 左上 */
-.orbit-bmi { top: 8%; left: 8%; }
-.orbit-fat { top: 8%; right: 8%; }
-.orbit-muscle { bottom: 8%; left: 8%; }
-.orbon-water { bottom: 8%; right: 8%; }
+/* 连接线效果 */
+.orbit-card::before {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 60px;
+  background: linear-gradient(to bottom, rgba(0, 102, 204, 0.3), transparent);
+  z-index: -1;
+}
+
+.orbit-bmi::before {
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-45deg);
+  transform-origin: top center;
+}
+
+.orbit-fat::before {
+  bottom: -60px;
+  right: 50%;
+  transform: translateX(50%) rotate(45deg);
+  transform-origin: top center;
+}
+
+.orbit-muscle::before {
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  transform-origin: bottom center;
+}
+
+.orbit-water::before {
+  top: -60px;
+  right: 50%;
+  transform: translateX(50%) rotate(-45deg);
+  transform-origin: bottom center;
+}
+
+/* 身体成分指标位置 - 更靠近中心 */
+.orbit-bmi { top: 15%; left: 18%; }
+.orbit-fat { top: 15%; right: 18%; }
+.orbit-muscle { bottom: 18%; left: 18%; }
+.orbit-water { bottom: 18%; right: 18%; }
 
 .orbit-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   color: var(--ink-muted-48);
   text-transform: uppercase;
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-xxs);
 }
 
 .orbit-value {
   font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
-  font-size: clamp(32px, 4.5vmin, 48px);
+  font-size: clamp(36px, 5vmin, 56px);
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   line-height: 1;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
@@ -218,13 +272,13 @@ svg { display: block; }
   top: 0;
   left: 0;
   right: 0;
-  padding: var(--space-md) var(--space-xl);
+  padding: var(--space-sm) var(--space-lg);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(245, 245, 247, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(245, 245, 247, 0.9);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   border-bottom: 1px solid var(--hairline);
   z-index: 20;
 }
@@ -262,17 +316,17 @@ svg { display: block; }
   bottom: 0;
   left: 0;
   right: 0;
-  padding: var(--space-lg) var(--space-xl);
-  background: rgba(245, 245, 247, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(245, 245, 247, 0.95);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   border-top: 1px solid var(--hairline);
   z-index: 20;
 }
 
 .members-scroll {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -284,23 +338,26 @@ svg { display: block; }
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-md);
   background: var(--canvas);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-pill);
   white-space: nowrap;
   transition: all 0.2s;
   cursor: pointer;
+  min-height: 48px;
 }
 
 .member-chip:hover {
   border-color: var(--primary);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
 }
 
 .member-chip.active {
   border-color: var(--primary);
-  background: rgba(0, 102, 204, 0.05);
+  background: rgba(0, 102, 204, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
 }
 
 .member-avatar {
@@ -546,18 +603,6 @@ svg { display: block; }
   gap: var(--space-xs);
   flex: none;
 }
-
-.clock { display: flex; flex-direction: column; line-height: 1; }
-
-.clock-time {
-  font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
-  font-size: 34px;
-  font-weight: 600;
-  letter-spacing: -0.374px;
-  font-variant-numeric: tabular-nums;
-}
-
-.clock-date { margin-top: var(--space-xxs); font-size: 14px; color: var(--ink-muted-48); font-weight: 400; }
 
 .strip-right { display: flex; align-items: center; gap: var(--space-xs); }
 
