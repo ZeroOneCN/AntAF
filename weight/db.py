@@ -63,6 +63,7 @@ class Database:
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._init_tables()
         self._migrate_from_json(default_height_cm, default_age, default_sex)
+        self._refit_body_precision()
 
     def _init_tables(self) -> None:
         self._conn.executescript("""
@@ -94,7 +95,27 @@ class Database:
             );
             CREATE INDEX IF NOT EXISTS idx_records_ts ON records(ts DESC);
             CREATE INDEX IF NOT EXISTS idx_records_user ON records(user_id);
+            CREATE TABLE IF NOT EXISTS meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
         """)
+        self._conn.commit()
+
+    def _refit_body_precision(self) -> None:
+        row = self._conn.execute(
+            "SELECT value FROM meta WHERE key='body_precision'"
+        ).fetchone()
+        if row and row["value"] == "2":
+            return
+        rows = self._conn.execute(
+            "SELECT * FROM records WHERE user_id IS NOT NULL AND impedance IS NOT NULL"
+        ).fetchall()
+        for row in rows:
+            self._recompute_record(dict(row))
+        self._conn.execute(
+            "INSERT OR REPLACE INTO meta(key, value) VALUES('body_precision', '2')"
+        )
         self._conn.commit()
 
     def _migrate_from_json(self, height_cm: int, age: int, sex: str) -> None:

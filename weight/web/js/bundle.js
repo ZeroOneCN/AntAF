@@ -6,11 +6,8 @@ const esc = (value) =>
 const num = (value, d = 1) =>
   Number.isFinite(Number(value)) ? Number(value).toFixed(d) : "--";
 
-const fmtWeight = (v) => {
-  if (!Number.isFinite(Number(v))) return "--";
-  const s = Number(v).toFixed(2);
-  return s.endsWith("0") ? s.slice(0, -1) : s;
-};
+const fmtWeight = (v) =>
+  Number.isFinite(Number(v)) ? Number(v).toFixed(2) : "--";
 
 const fmtClock = (ts) => {
   const d = new Date(ts);
@@ -119,23 +116,23 @@ function bodyOf(v) {
 
 
 const METRICS = [
-  { key: "bmi", label: "BMI", unit: "", d: 1, band: "bmi" },
-  { key: "body_fat", label: "体脂率", unit: "%", d: 1, band: "body_fat" },
+  { key: "bmi", label: "BMI", unit: "", d: 2, band: "bmi" },
+  { key: "body_fat", label: "体脂率", unit: "%", d: 2, band: "body_fat" },
   { key: "visceral_fat", label: "内脏脂肪", unit: "级", d: 0, band: "visceral_fat" },
-  { key: "muscle", label: "肌肉量", unit: "kg", d: 1, band: "muscle" },
-  { key: "fat_mass", label: "体脂量", unit: "kg", d: 1, band: "fat_mass" },
-  { key: "sub_fat_pct", label: "皮下脂肪率", unit: "%", d: 1, band: "sub_fat" },
-  { key: "sub_fat_mass", label: "皮下脂肪量", unit: "kg", d: 1, band: "sub_fat" },
-  { key: "water", label: "水分率", unit: "%", d: 1, band: "water" },
-  { key: "water_mass", label: "水分量", unit: "kg", d: 1, band: "water_mass" },
-  { key: "protein_rate", label: "蛋白质率", unit: "%", d: 1, band: "protein" },
-  { key: "protein_mass", label: "蛋白质量", unit: "kg", d: 1, band: "protein" },
+  { key: "muscle", label: "肌肉量", unit: "kg", d: 2, band: "muscle" },
+  { key: "fat_mass", label: "体脂量", unit: "kg", d: 2, band: "fat_mass" },
+  { key: "sub_fat_pct", label: "皮下脂肪率", unit: "%", d: 2, band: "sub_fat" },
+  { key: "sub_fat_mass", label: "皮下脂肪量", unit: "kg", d: 2, band: "sub_fat" },
+  { key: "water", label: "水分率", unit: "%", d: 2, band: "water" },
+  { key: "water_mass", label: "水分量", unit: "kg", d: 2, band: "water_mass" },
+  { key: "protein_rate", label: "蛋白质率", unit: "%", d: 2, band: "protein" },
+  { key: "protein_mass", label: "蛋白质量", unit: "kg", d: 2, band: "protein" },
   { key: "bone", label: "骨量", unit: "kg", d: 2, band: "bone" },
-  { key: "bone_rate", label: "骨量率", unit: "%", d: 1, band: "bone" },
-  { key: "muscle_rate", label: "肌肉率", unit: "%", d: 1, band: "muscle_rate" },
-  { key: "skeletal_muscle", label: "骨骼肌量", unit: "kg", d: 1, band: "skeletal_muscle" },
-  { key: "skeletal_muscle_rate", label: "骨骼肌率", unit: "%", d: 1, band: "skeletal_muscle_rate" },
-  { key: "lean_mass", label: "去脂体重", unit: "kg", d: 1, band: "" },
+  { key: "bone_rate", label: "骨量率", unit: "%", d: 2, band: "bone" },
+  { key: "muscle_rate", label: "肌肉率", unit: "%", d: 2, band: "muscle_rate" },
+  { key: "skeletal_muscle", label: "骨骼肌量", unit: "kg", d: 2, band: "skeletal_muscle" },
+  { key: "skeletal_muscle_rate", label: "骨骼肌率", unit: "%", d: 2, band: "skeletal_muscle_rate" },
+  { key: "lean_mass", label: "去脂体重", unit: "kg", d: 2, band: "" },
   { key: "bmr", label: "基础代谢", unit: "kcal", d: 0, band: "" },
 ];
 
@@ -208,25 +205,25 @@ function drawBodyComposition() {
   document.getElementById("cardWater").hidden = false;
 
   // BMI
-  document.getElementById("bmiValue").textContent = num(body.bmi, 1);
+  document.getElementById("bmiValue").textContent = num(body.bmi, 2);
   const bmiGradeEl = document.getElementById("bmiGrade");
   bmiGradeEl.textContent = gradeText(METRICS[0], body);
   bmiGradeEl.dataset.tone = gradeTone(METRICS[0], body);
 
   // Body fat
-  document.getElementById("fatValue").innerHTML = `${num(body.body_fat, 1)}<small class="orbit-unit">%</small>`;
+  document.getElementById("fatValue").innerHTML = `${num(body.body_fat, 2)}<small class="orbit-unit">%</small>`;
   const fatGradeEl = document.getElementById("fatGrade");
   fatGradeEl.textContent = gradeText(METRICS[1], body);
   fatGradeEl.dataset.tone = gradeTone(METRICS[1], body);
 
   // Muscle
-  document.getElementById("muscleValue").innerHTML = `${num(body.muscle, 1)}<small class="orbit-unit">kg</small>`;
+  document.getElementById("muscleValue").innerHTML = `${num(body.muscle, 2)}<small class="orbit-unit">kg</small>`;
   const muscleGradeEl = document.getElementById("muscleGrade");
   muscleGradeEl.textContent = gradeText(METRICS[3], body);
   muscleGradeEl.dataset.tone = gradeTone(METRICS[3], body);
 
   // Water
-  document.getElementById("waterValue").innerHTML = `${num(body.water, 1)}<small class="orbit-unit">%</small>`;
+  document.getElementById("waterValue").innerHTML = `${num(body.water, 2)}<small class="orbit-unit">%</small>`;
   const waterGradeEl = document.getElementById("waterGrade");
   waterGradeEl.textContent = gradeText(METRICS[7], body);
   waterGradeEl.dataset.tone = gradeTone(METRICS[7], body);

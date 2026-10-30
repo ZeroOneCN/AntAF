@@ -6,11 +6,8 @@ export const esc = (value) =>
 export const num = (value, d = 1) =>
   Number.isFinite(Number(value)) ? Number(value).toFixed(d) : "--";
 
-export const fmtWeight = (v) => {
-  if (!Number.isFinite(Number(v))) return "--";
-  const s = Number(v).toFixed(2);
-  return s.endsWith("0") ? s.slice(0, -1) : s;
-};
+export const fmtWeight = (v) =>
+  Number.isFinite(Number(v)) ? Number(v).toFixed(2) : "--";
 
 export const fmtClock = (ts) => {
   const d = new Date(ts);

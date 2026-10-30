@@ -379,7 +379,7 @@ svg { display: block; }
 .orbit-value {
   grid-area: value;
   font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
-  font-size: clamp(46px, 6.8vmin, 68px);
+  font-size: clamp(44px, 6.2vmin, 58px);
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
@@ -810,8 +810,8 @@ svg { display: block; }
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
-    "name name"
-    "val grade";
+    "name grade"
+    "val val";
   align-items: center;
   column-gap: var(--space-xs);
   row-gap: 2px;
@@ -824,6 +824,9 @@ svg { display: block; }
 .metric-name {
   grid-area: name;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -903,7 +906,7 @@ svg { display: block; }
   .orbit-water { bottom: 13%; right: 3%; }
 
   .orbit-label { font-size: 14px; }
-  .orbit-value { font-size: clamp(42px, 6.4vmin, 62px); }
+  .orbit-value { font-size: clamp(42px, 6.2vmin, 58px); }
   .orbit-unit { font-size: 18px; }
   .orbit-grade { font-size: 14px; }
 }
@@ -1015,6 +1018,10 @@ svg { display: block; }
   .metrics-grid { gap: 10px; }
   .metric-item { padding: 12px; }
   .metric-val { font-size: 26px; }
+}
+
+@media (max-width: 359px) {
+  .metrics-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
