@@ -6,4 +6,10 @@ __pycache__/
 # 本地数据与密钥
 weight/weight_store.json
 weight/weight_store.json.tmp
+weight/*.db
+weight/*.db-wal
+weight/*.db-shm
 .env
+
+# 调试与临时产物
+.tmp/
