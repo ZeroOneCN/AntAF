@@ -241,6 +241,14 @@ svg { display: block; }
 .orbit-card {
   position: absolute;
   z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label grade"
+    "value value";
+  align-items: center;
+  column-gap: var(--space-xs);
+  row-gap: 2px;
   background: var(--canvas);
   border: 1px solid var(--hairline);
   border-radius: 22px;
@@ -358,15 +366,18 @@ svg { display: block; }
 .orbit-water { bottom: 18%; right: 18%; }
 
 .orbit-label {
+  grid-area: label;
+  min-width: 0;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--ink-muted-48);
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 0;
 }
 
 .orbit-value {
+  grid-area: value;
   font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
   font-size: clamp(46px, 6.8vmin, 68px);
   font-weight: 700;
@@ -384,13 +395,17 @@ svg { display: block; }
 }
 
 .orbit-grade {
+  grid-area: grade;
+  justify-self: end;
   display: inline-block;
-  margin-top: 10px;
+  margin-top: 0;
   font-size: 15px;
   font-weight: 700;
+  line-height: 1.2;
   padding: 5px 10px;
   border-radius: 7px;
   background: var(--canvas-parchment);
+  white-space: nowrap;
 }
 
 [data-theme="dark"] .orbit-grade {
@@ -578,12 +593,12 @@ svg { display: block; }
   transform: scale(0.98);
 }
 
-.member-add {
+.member-chip.member-add {
   flex: none;
   gap: 8px;
   min-height: 56px;
   padding: 0 18px;
-  color: var(--canvas);
+  color: #ffffff;
   background: var(--primary);
   border-color: var(--primary);
   font-size: 16px;
@@ -591,11 +606,25 @@ svg { display: block; }
   box-shadow: 0 4px 14px rgba(0, 102, 204, 0.25);
 }
 
-.member-add:hover {
-  color: var(--canvas);
+[data-theme="dark"] .member-chip.member-add {
+  color: #08131f;
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 4px 16px rgba(41, 151, 255, 0.3);
+}
+
+.member-chip.member-add:hover {
+  color: #ffffff;
   background: var(--primary-focus);
   border-color: var(--primary-focus);
   box-shadow: 0 6px 20px rgba(0, 102, 204, 0.32);
+}
+
+[data-theme="dark"] .member-chip.member-add:hover {
+  color: #08131f;
+  background: var(--primary-focus);
+  border-color: var(--primary-focus);
+  box-shadow: 0 6px 22px rgba(64, 156, 255, 0.36);
 }
 
 .member-add svg {
@@ -778,6 +807,14 @@ svg { display: block; }
 }
 
 .metric-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "name name"
+    "val grade";
+  align-items: center;
+  column-gap: var(--space-xs);
+  row-gap: 2px;
   padding: 15px 16px;
   background: var(--canvas-parchment);
   border-radius: 14px;
@@ -785,15 +822,18 @@ svg { display: block; }
 }
 
 .metric-name {
+  grid-area: name;
+  min-width: 0;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--ink-muted-48);
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 0;
 }
 
 .metric-val {
+  grid-area: val;
   font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
   font-size: 30px;
   font-weight: 700;
@@ -811,7 +851,9 @@ svg { display: block; }
 }
 
 .metric-item .orbit-grade {
-  margin-top: 8px;
+  grid-area: grade;
+  justify-self: end;
+  margin-top: 0;
   font-size: 14px;
   padding: 4px 9px;
 }
@@ -897,7 +939,7 @@ svg { display: block; }
   .orbit-value { font-size: clamp(34px, 6.4vw, 48px); }
   .orbit-label { font-size: 12px; }
   .orbit-unit { font-size: 16px; }
-  .orbit-grade { font-size: 12px; margin-top: 6px; }
+  .orbit-grade { font-size: 12px; margin-top: 0; }
 }
 
 @media (max-width: 600px) {
@@ -953,7 +995,7 @@ svg { display: block; }
   .orbit-value { font-size: clamp(44px, 12vw, 58px); }
   .orbit-label { font-size: 15px; }
   .orbit-unit { font-size: 19px; }
-  .orbit-grade { font-size: 15px; margin-top: 8px; }
+  .orbit-grade { font-size: 15px; margin-top: 0; }
 
   .orbit-card::before { display: none; }
 
@@ -996,10 +1038,10 @@ svg { display: block; }
     padding: 10px 14px;
     border-radius: 16px;
   }
-  .orbit-label { font-size: 12px; margin-bottom: 2px; }
+  .orbit-label { font-size: 12px; margin-bottom: 0; }
   .orbit-value { font-size: clamp(30px, 7vh, 44px); }
   .orbit-unit { font-size: 15px; }
-  .orbit-grade { font-size: 12px; margin-top: 4px; padding: 3px 7px; }
+  .orbit-grade { font-size: 12px; margin-top: 0; padding: 3px 7px; }
 
   .orbit-bmi { top: 12%; left: 2%; }
   .orbit-fat { top: 12%; right: 2%; }
