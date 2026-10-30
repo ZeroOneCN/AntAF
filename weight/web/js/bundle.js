@@ -9,14 +9,37 @@ const num = (value, d = 1) =>
 const fmtWeight = (v) =>
   Number.isFinite(Number(v)) ? Number(v).toFixed(2) : "--";
 
+const pad = (value) => String(value).padStart(2, "0");
+
 const fmtClock = (ts) => {
   const d = new Date(ts);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
 const fmtStamp = (ts) => {
   const d = new Date(ts);
-  return `${d.getMonth() + 1}/${d.getDate()} ${fmtClock(ts)}`;
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${fmtClock(ts)}`;
+};
+
+const fmtMoment = (ts) => {
+  const d = new Date(ts);
+  const now = new Date();
+  if (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  ) {
+    return `今天 ${fmtClock(ts)}`;
+  }
+  if (d.getFullYear() === now.getFullYear()) {
+    return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${fmtClock(ts)}`;
+  }
+  return fmtStamp(ts);
+};
+
+const fmtDay = (ts) => {
+  const d = new Date(ts);
+  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
 };
 
 const ago = (ts) => {
@@ -74,6 +97,8 @@ const LIVE_HOLD_MS = 90_000;
 const state = {
   users: [],
   records: [],
+  suggestion: null,
+  trendRange: 7,
   live: null,
   selectedId: null,
   filterUser: null,
@@ -174,7 +199,7 @@ function drawHero(el) {
   } else if (v.mode === "record") {
     const rec = v.record;
     el.weightValue.textContent = fmtWeight(rec.kg);
-    el.weightTime.textContent = `上次测量 · ${ago(rec.ts)}`;
+    el.weightTime.textContent = `上次测量 · ${fmtMoment(rec.ts)}`;
   } else {
     el.weightValue.textContent = "--";
     el.weightTime.textContent = "等待称重";
@@ -265,8 +290,31 @@ function drawMetricsGrid(body) {
   });
 }
 
+function currentSuggestion() {
+  const hint = state.suggestion;
+  if (!hint) return null;
+  const record = state.records.find((item) => item.id === hint.record_id);
+  const user = state.users.find((item) => item.id === hint.user_id);
+  if (!record || !user || record.user_id) return null;
+  return { ...hint, record, user };
+}
+
 function drawMembers(el, actions) {
   el.innerHTML = "";
+
+  const suggest = currentSuggestion();
+  if (suggest) {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "member-chip member-suggest";
+    chip.title = `按历史体重推荐：${suggest.user.name}（参考 ${fmtWeight(suggest.ref_kg)} kg）`;
+    chip.innerHTML = `<span class="suggest-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+      <span class="member-info"><b>归属给 ${esc(suggest.user.name)}</b><span>参考 ${fmtWeight(suggest.ref_kg)} kg · 差 ${num(suggest.diff, 2)} kg</span></span>`;
+    chip.addEventListener("click", () =>
+      actions.assignSuggested(suggest.record.id, suggest.user.id, suggest.user.name)
+    );
+    el.appendChild(chip);
+  }
 
   if (!state.users.length) {
     el.innerHTML = '<div class="list-empty">暂无成员，点击右侧按钮添加</div>';
@@ -285,18 +333,33 @@ function drawMembers(el, actions) {
     const info = document.createElement("div");
     info.className = "member-info";
     const latest = state.records.find((record) => record.user_id === user.id);
-    info.innerHTML = `<b>${esc(user.name)}</b><span>${latest ? `${fmtWeight(latest.kg)} kg · ${ago(latest.ts)}` : "暂无记录"}</span>`;
+    info.innerHTML = `<b>${esc(user.name)}</b><span>${latest ? `${fmtWeight(latest.kg)} kg · ${fmtMoment(latest.ts)}` : "暂无记录"}</span>`;
 
     const remove = document.createElement("button");
     remove.className = "member-remove";
     remove.type = "button";
-    remove.title = `删除成员 ${user.name}`;
-    remove.setAttribute("aria-label", `删除成员 ${user.name}`);
+    const owned = Number(user.record_count) || 0;
+    remove.title = owned
+      ? `${user.name} 名下还有 ${owned} 条记录，请先转移归属`
+      : `删除成员 ${user.name}`;
+    remove.setAttribute("aria-label", remove.title);
+    if (owned) {
+      remove.classList.add("is-blocked");
+      remove.setAttribute("aria-disabled", "true");
+    }
     remove.innerHTML =
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"/></svg>';
 
     remove.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (owned) {
+        remove.classList.remove("is-shaking");
+        void remove.offsetWidth;
+        remove.classList.add("is-shaking");
+        setTimeout(() => remove.classList.remove("is-shaking"), 480);
+        actions.notify("warn", `${user.name} 名下还有 ${owned} 条记录，请先把记录归属给其他成员`);
+        return;
+      }
       actions.deleteUser(user);
     });
 
@@ -337,7 +400,8 @@ function drawRecords(el, actions) {
 
     const time = document.createElement("span");
     time.className = "time";
-    time.textContent = ago(rec.ts);
+    time.textContent = fmtStamp(rec.ts);
+    time.title = fmtStamp(rec.ts);
 
     const kg = document.createElement("span");
     kg.className = "kg";
@@ -394,6 +458,154 @@ function drawRecords(el, actions) {
   });
 }
 
+function drawTrends() {
+  const charts = document.getElementById("trendCharts");
+  const who = document.getElementById("trendWho");
+  if (!charts || !who) return;
+
+  document.querySelectorAll("[data-range]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(Number(button.dataset.range) === state.trendRange));
+  });
+
+  const selected = state.selectedId
+    ? state.records.find((record) => record.id === state.selectedId)
+    : null;
+  if (selected && !selected.user_id) {
+    who.textContent = "趋势";
+    charts.innerHTML = '<p class="trend-empty">这条记录尚未归属，无法生成趋势。</p>';
+    return;
+  }
+
+  const userId = selected?.user_id || state.filterUser || state.records.find((r) => r.user_id)?.user_id;
+  const user = state.users.find((item) => item.id === userId);
+  if (!user) {
+    who.textContent = "趋势";
+    charts.innerHTML = '<p class="trend-empty">归属成员后显示体重与体脂率趋势。</p>';
+    return;
+  }
+
+  who.textContent = `趋势 · ${user.name}`;
+  const days = state.trendRange;
+  const now = Date.now();
+  const cutoff = now - days * DAY_MS;
+  const recs = state.records
+    .filter((record) => record.user_id === user.id)
+    .sort((a, b) => a.ts - b.ts);
+
+  const weightSeries = dailySeries(recs, cutoff, (record) => record.kg);
+  const fatSeries = dailySeries(recs, cutoff, (record) => record.body?.body_fat);
+  const weightDelta = diffOf(recs.map((record) => record.kg));
+  const fatDelta = diffOf(recs.map((record) => record.body?.body_fat));
+
+  const rows = [
+    sparkRow({
+      label: "体重",
+      unit: "kg",
+      decimals: 2,
+      tone: "weight",
+      series: weightSeries,
+      delta: weightDelta,
+      cutoff,
+      now,
+      days,
+    }),
+    sparkRow({
+      label: "体脂率",
+      unit: "%",
+      decimals: 2,
+      tone: "fat",
+      series: fatSeries,
+      delta: fatDelta,
+      cutoff,
+      now,
+      days,
+    }),
+  ].filter(Boolean);
+
+  charts.innerHTML = rows.length
+    ? rows.join("")
+    : `<p class="trend-empty">近 ${days} 天暂无测量记录</p>`;
+}
+
+const DAY_MS = 86_400_000;
+const TREND_W = 360;
+const TREND_H = 88;
+
+function dailySeries(records, cutoff, pickValue) {
+  const byDay = new Map();
+  for (const record of records) {
+    if (record.ts < cutoff) continue;
+    const value = Number(pickValue(record));
+    if (!Number.isFinite(value)) continue;
+    const day = new Date(record.ts);
+    byDay.set(`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`, {
+      ts: record.ts,
+      value,
+    });
+  }
+  return [...byDay.values()].sort((a, b) => a.ts - b.ts);
+}
+
+function diffOf(values) {
+  const nums = values.filter((value) => Number.isFinite(value));
+  if (nums.length < 2) return { diff: null };
+  return { diff: nums[nums.length - 1] - nums[nums.length - 2] };
+}
+
+function signed(value, decimals) {
+  if (Math.abs(value) < 0.005) return "持平";
+  return `${value > 0 ? "+" : "−"}${Math.abs(value).toFixed(decimals)}`;
+}
+
+function sparkRow({ label, unit, decimals, tone, series, delta, cutoff, now, days }) {
+  const top =
+    `<div class="spark-top">
+       <span class="spark-name">${label}</span>`;
+  if (!series.length) {
+    return `<div class="spark spark-${tone} spark-empty">
+      ${top}<span class="spark-note">近 ${days} 天暂无记录</span></div>
+    </div>`;
+  }
+  const current = series[series.length - 1].value;
+  const deltaHtml =
+    delta.diff === null
+      ? '<span class="spark-delta is-flat">首次记录</span>'
+      : `<span class="spark-delta ${delta.diff > 0 ? "is-up" : delta.diff < 0 ? "is-down" : "is-flat"}">较上次 ${signed(delta.diff, decimals)} ${unit}</span>`;
+
+  return `<div class="spark spark-${tone}">
+    ${top}
+      <span class="spark-value">${current.toFixed(decimals)}<small>${unit}</small></span>
+      ${deltaHtml}
+    </div>
+    ${sparkSvg(series, cutoff, now)}
+    <div class="spark-axis"><span>${fmtDay(cutoff)}</span><span>${fmtDay(now)}</span></div>
+  </div>`;
+}
+
+function sparkSvg(series, cutoff, now) {
+  const values = series.map((point) => point.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || Math.max(1, Math.abs(max) * 0.02);
+  const padX = 10;
+  const padY = 12;
+  const xOf = (ts) => padX + ((ts - cutoff) / Math.max(1, now - cutoff)) * (TREND_W - padX * 2);
+  const yOf = (value) => padY + (1 - (value - min) / span) * (TREND_H - padY * 2);
+  const coords = series.map((point) => [xOf(point.ts), yOf(point.value)]);
+  const line = coords
+    .map(([x, y], index) => `${index ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`)
+    .join(" ");
+  const first = coords[0];
+  const last = coords[coords.length - 1];
+  const area = `${line} L${last[0].toFixed(1)},${TREND_H - 1} L${first[0].toFixed(1)},${TREND_H - 1} Z`;
+
+  return `<svg class="spark-svg" viewBox="0 0 ${TREND_W} ${TREND_H}" preserveAspectRatio="none" aria-hidden="true">
+    <path class="spark-area" d="${area}" />
+    <path class="spark-line" d="${line}" vector-effect="non-scaling-stroke" />
+    <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3.5" />
+  </svg>`;
+}
+
 function drawStatus(el) {
   if (state.connected) {
     el.wsPill.className = "pill pill-live";
@@ -411,6 +623,7 @@ function renderAll(el, actions) {
   drawHero(el);
   drawBodyComposition();
   drawMembers(document.getElementById("memberList"), actions);
+  drawTrends();
   drawRecords(document.getElementById("recordList"), actions);
   drawStatus(el);
 }
@@ -491,6 +704,7 @@ function handleMessage(data, onToast) {
     case "weight_state": {
       state.users = Array.isArray(data.users) ? data.users : state.users;
       state.records = Array.isArray(data.records) ? data.records : state.records;
+      state.suggestion = data.suggestion || null;
       if (state.selectedId && !recordById(state.selectedId)) state.selectedId = null;
       break;
     }
@@ -876,6 +1090,7 @@ function stopThreeEffects() {
 
 
 
+
 const $ = (id) => document.getElementById(id);
 
 let el;
@@ -909,14 +1124,19 @@ const actions = {
   deleteUser(user) {
     openDeleteUser(user, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot);
   },
+  notify(level, text) {
+    toastFn(level, text);
+  },
+  assignSuggested(recordId, userId, userName) {
+    send({ type: "assign_record", record_id: recordId, user_id: userId });
+    toastFn("ok", `已归属给 ${userName}`);
+  },
 };
 
 function tickClock() {
   const now = new Date();
-  const h = String(now.getHours()).padStart(2, "0");
-  const m = String(now.getMinutes()).padStart(2, "0");
-  el.clockTime.textContent = `${h}:${m}`;
-  el.clockDate.textContent = `${now.getMonth() + 1}月${now.getDate()}日 周${"日一二三四五六"[now.getDay()]}`;
+  el.clockTime.textContent = fmtClock(now);
+  el.clockDate.textContent = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")} 周${"日一二三四五六"[now.getDay()]}`;
 }
 
 function applyTheme(theme, persist = false) {
@@ -949,6 +1169,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   el.themeToggle.addEventListener("click", () => {
     applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+  });
+
+  document.querySelectorAll("[data-range]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.trendRange = Number(button.dataset.range) === 30 ? 30 : 7;
+      renderAll(el, actions);
+    });
   });
 
   el.addUserBtn.addEventListener("click", () => {
@@ -991,7 +1218,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   connect(onMessage, toastFn);
   tickClock();
-  setInterval(tickClock, 10_000);
+  setInterval(tickClock, 1_000);
   renderAll(el, actions);
 });
 

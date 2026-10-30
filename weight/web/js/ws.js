@@ -74,6 +74,7 @@ export function handleMessage(data, onToast) {
     case "weight_state": {
       state.users = Array.isArray(data.users) ? data.users : state.users;
       state.records = Array.isArray(data.records) ? data.records : state.records;
+      state.suggestion = data.suggestion || null;
       if (state.selectedId && !recordById(state.selectedId)) state.selectedId = null;
       break;
     }

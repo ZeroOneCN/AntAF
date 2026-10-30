@@ -3,6 +3,8 @@ const LIVE_HOLD_MS = 90_000;
 export const state = {
   users: [],
   records: [],
+  suggestion: null,
+  trendRange: 7,
   live: null,
   selectedId: null,
   filterUser: null,

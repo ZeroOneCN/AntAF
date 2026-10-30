@@ -9,14 +9,37 @@ export const num = (value, d = 1) =>
 export const fmtWeight = (v) =>
   Number.isFinite(Number(v)) ? Number(v).toFixed(2) : "--";
 
+const pad = (value) => String(value).padStart(2, "0");
+
 export const fmtClock = (ts) => {
   const d = new Date(ts);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
 export const fmtStamp = (ts) => {
   const d = new Date(ts);
-  return `${d.getMonth() + 1}/${d.getDate()} ${fmtClock(ts)}`;
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${fmtClock(ts)}`;
+};
+
+export const fmtMoment = (ts) => {
+  const d = new Date(ts);
+  const now = new Date();
+  if (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  ) {
+    return `今天 ${fmtClock(ts)}`;
+  }
+  if (d.getFullYear() === now.getFullYear()) {
+    return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${fmtClock(ts)}`;
+  }
+  return fmtStamp(ts);
+};
+
+export const fmtDay = (ts) => {
+  const d = new Date(ts);
+  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
 };
 
 export const ago = (ts) => {

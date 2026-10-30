@@ -33,7 +33,7 @@ PALETTE = (
 # 保留的最大记录条数
 MAX_RECORDS = 200
 # 下发给页面的记录条数
-STATE_RECORDS = 40
+STATE_RECORDS = 120
 # 同一称重会话的合并时间窗口（毫秒）
 SESSION_GAP_MS = 90_000
 # 同一会话内视为同一重量的克数容差
@@ -191,6 +191,15 @@ class Database:
 
     def state(self) -> dict[str, Any]:
         users = [dict(row) for row in self._conn.execute("SELECT * FROM users").fetchall()]
+        counts = {
+            row["user_id"]: row["total"]
+            for row in self._conn.execute(
+                """SELECT user_id, COUNT(*) AS total FROM records
+                   WHERE user_id IS NOT NULL GROUP BY user_id"""
+            )
+        }
+        for user in users:
+            user["record_count"] = counts.get(user["id"], 0)
         records = [
             {**dict(row), "impedances": json.loads(row["impedances"]) if row["impedances"] else [],
              "profile": json.loads(row["profile"]) if row["profile"] else None,
@@ -199,7 +208,42 @@ class Database:
                 "SELECT * FROM records ORDER BY ts DESC LIMIT ?", (STATE_RECORDS,)
             ).fetchall()
         ]
-        return {"version": self.version, "users": users, "records": records}
+        return {
+            "version": self.version,
+            "users": users,
+            "records": records,
+            "suggestion": self._assign_suggestion(),
+        }
+
+    def _assign_suggestion(self) -> dict[str, Any] | None:
+        """按最近体重给最新一条未归属记录推荐成员。"""
+        latest = self._conn.execute(
+            "SELECT id, ts, kg, user_id FROM records ORDER BY ts DESC LIMIT 1"
+        ).fetchone()
+        if latest is None or latest["user_id"]:
+            return None
+        best: dict[str, Any] | None = None
+        for user in self._conn.execute("SELECT id, name FROM users").fetchall():
+            recent = self._conn.execute(
+                "SELECT kg FROM records WHERE user_id=? ORDER BY ts DESC LIMIT 3",
+                (user["id"],),
+            ).fetchall()
+            if not recent:
+                continue
+            ref = sum(float(row["kg"]) for row in recent) / len(recent)
+            diff = abs(float(latest["kg"]) - ref)
+            if best is None or diff < best["diff"]:
+                best = {
+                    "record_id": latest["id"],
+                    "user_id": user["id"],
+                    "user_name": user["name"],
+                    "ref_kg": round(ref, 2),
+                    "diff": round(diff, 2),
+                }
+        if best is None:
+            return None
+        best["kg"] = round(float(latest["kg"]), 2)
+        return best
 
     def get_user(self, user_id: str | None) -> dict[str, Any] | None:
         if not user_id:

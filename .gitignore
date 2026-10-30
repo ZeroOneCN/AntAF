@@ -13,3 +13,4 @@ weight/*.db-shm
 
 # 调试与临时产物
 .tmp/
+*.log

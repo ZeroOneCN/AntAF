@@ -1,6 +1,7 @@
 import { state } from "./state.js";
 import { renderAll } from "./render.js";
 import { connect, handleMessage, send, toast } from "./ws.js";
+import { fmtClock } from "./utils.js";
 import {
   openModal,
   closeModal,
@@ -44,14 +45,19 @@ const actions = {
   deleteUser(user) {
     openDeleteUser(user, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot);
   },
+  notify(level, text) {
+    toastFn(level, text);
+  },
+  assignSuggested(recordId, userId, userName) {
+    send({ type: "assign_record", record_id: recordId, user_id: userId });
+    toastFn("ok", `已归属给 ${userName}`);
+  },
 };
 
 function tickClock() {
   const now = new Date();
-  const h = String(now.getHours()).padStart(2, "0");
-  const m = String(now.getMinutes()).padStart(2, "0");
-  el.clockTime.textContent = `${h}:${m}`;
-  el.clockDate.textContent = `${now.getMonth() + 1}月${now.getDate()}日 周${"日一二三四五六"[now.getDay()]}`;
+  el.clockTime.textContent = fmtClock(now);
+  el.clockDate.textContent = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")} 周${"日一二三四五六"[now.getDay()]}`;
 }
 
 function applyTheme(theme, persist = false) {
@@ -84,6 +90,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   el.themeToggle.addEventListener("click", () => {
     applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+  });
+
+  document.querySelectorAll("[data-range]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.trendRange = Number(button.dataset.range) === 30 ? 30 : 7;
+      renderAll(el, actions);
+    });
   });
 
   el.addUserBtn.addEventListener("click", () => {
@@ -126,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   connect(onMessage, toastFn);
   tickClock();
-  setInterval(tickClock, 10_000);
+  setInterval(tickClock, 1_000);
   renderAll(el, actions);
 });
 
