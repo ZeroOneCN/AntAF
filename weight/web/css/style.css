@@ -81,6 +81,18 @@ svg { display: block; }
   justify-content: center;
   padding: var(--space-xl);
   overflow: hidden;
+  perspective: 2000px;
+  perspective-origin: 50% 50%;
+}
+
+#threeCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* 中心体重显示 - 巨大圆形 */
@@ -104,26 +116,65 @@ svg { display: block; }
   justify-content: center;
   z-index: 10;
   animation: float 6s ease-in-out infinite;
+  transform-style: preserve-3d;
 }
 
 /* 装饰性外环 */
 .center-weight::before {
   content: '';
   position: absolute;
-  inset: -15px;
+  inset: -20px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 102, 204, 0.15);
+  border: 2px solid rgba(0, 102, 204, 0.2);
   animation: ring-pulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.center-weight::after {
+  content: '';
+  position: absolute;
+  inset: -35px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 102, 204, 0.1);
+  animation: ring-pulse 4s ease-in-out infinite 2s;
+  pointer-events: none;
 }
 
 @keyframes ring-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.3; }
-  50% { transform: scale(1.05); opacity: 0.6; }
+  0%, 100% { 
+    transform: scale(1) rotateZ(0deg); 
+    opacity: 0.3; 
+  }
+  50% { 
+    transform: scale(1.1) rotateZ(180deg); 
+    opacity: 0.7; 
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-  50% { transform: translate(-50%, -50%) translateY(-8px); }
+  0%, 100% { 
+    transform: translate(-50%, -50%) translateY(0) rotateX(0deg) rotateY(0deg) scale(1);
+  }
+  25% { 
+    transform: translate(-50%, -50%) translateY(-8px) rotateX(2deg) rotateY(-2deg) scale(1.01);
+  }
+  50% { 
+    transform: translate(-50%, -50%) translateY(-15px) rotateX(0deg) rotateY(0deg) scale(1.02);
+  }
+  75% { 
+    transform: translate(-50%, -50%) translateY(-8px) rotateX(-2deg) rotateY(2deg) scale(1.01);
+  }
+}
+
+/* 中心圆悬停效果 */
+.center-weight:hover {
+  animation-play-state: paused;
+  transform: translate(-50%, -50%) translateY(-20px) rotateX(5deg) rotateY(-5deg) scale(1.05) !important;
+  box-shadow: 
+    0 50px 150px rgba(0, 102, 204, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.03),
+    inset 0 2px 20px rgba(255, 255, 255, 0.9);
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .center-weight .big-num {
@@ -152,7 +203,7 @@ svg { display: block; }
   font-variant-numeric: tabular-nums;
 }
 
-/* 轨道上的数据卡片 */
+/* 轨道上的数据卡片 - 3D 效果 */
 .orbit-card {
   position: absolute;
   background: var(--canvas);
@@ -162,34 +213,68 @@ svg { display: block; }
   min-width: 160px;
   max-width: 240px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s;
-  animation: orbit-pulse 8s ease-in-out infinite;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: orbit-float 10s ease-in-out infinite;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  backface-visibility: hidden;
 }
 
-@keyframes orbit-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+@keyframes orbit-float {
+  0%, 100% { 
+    transform: translateY(0px) rotateX(0deg) rotateY(0deg) scale(1);
+  }
+  25% { 
+    transform: translateY(-8px) rotateX(2deg) rotateY(-3deg) scale(1.01);
+  }
+  50% { 
+    transform: translateY(-12px) rotateX(0deg) rotateY(0deg) scale(1.02);
+  }
+  75% { 
+    transform: translateY(-8px) rotateX(-2deg) rotateY(3deg) scale(1.01);
+  }
 }
 
-.orbit-bmi { animation-delay: 0s; }
-.orbit-fat { animation-delay: 2s; }
-.orbit-muscle { animation-delay: 4s; }
-.orbit-water { animation-delay: 6s; }
+.orbit-bmi { animation-delay: 0s; animation-duration: 10s; }
+.orbit-fat { animation-delay: 2.5s; animation-duration: 10s; }
+.orbit-muscle { animation-delay: 5s; animation-duration: 10s; }
+.orbit-water { animation-delay: 7.5s; animation-duration: 10s; }
 
 .orbit-card:hover {
-  transform: scale(1.08) !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-15px) rotateY(-10deg) rotateX(5deg) scale(1.15) translateZ(30px) !important;
+  box-shadow: 0 25px 70px rgba(0, 102, 204, 0.25);
   z-index: 15;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* 连接线效果 */
+.orbit-card:active {
+  transform: translateY(-10px) rotateY(-5deg) rotateX(2deg) scale(1.05) translateZ(15px) !important;
+}
+
+/* 连接线效果 - 添加动画 */
 .orbit-card::before {
   content: '';
   position: absolute;
   width: 2px;
   height: 60px;
-  background: linear-gradient(to bottom, rgba(0, 102, 204, 0.3), transparent);
+  background: linear-gradient(to bottom, rgba(0, 102, 204, 0.4), transparent);
   z-index: -1;
+  animation: line-flow 3s linear infinite;
+}
+
+@keyframes line-flow {
+  0% {
+    opacity: 0.3;
+    transform: translateY(0px) scaleY(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-5px) scaleY(1.1);
+  }
+  100% {
+    opacity: 0.3;
+    transform: translateY(0px) scaleY(1);
+  }
 }
 
 .orbit-bmi::before {
@@ -197,6 +282,7 @@ svg { display: block; }
   left: 50%;
   transform: translateX(-50%) rotate(-45deg);
   transform-origin: top center;
+  animation-delay: 0s;
 }
 
 .orbit-fat::before {
@@ -204,6 +290,7 @@ svg { display: block; }
   right: 50%;
   transform: translateX(50%) rotate(45deg);
   transform-origin: top center;
+  animation-delay: 0.75s;
 }
 
 .orbit-muscle::before {
@@ -211,6 +298,7 @@ svg { display: block; }
   left: 50%;
   transform: translateX(-50%) rotate(45deg);
   transform-origin: bottom center;
+  animation-delay: 1.5s;
 }
 
 .orbit-water::before {
@@ -218,6 +306,7 @@ svg { display: block; }
   right: 50%;
   transform: translateX(50%) rotate(-45deg);
   transform-origin: bottom center;
+  animation-delay: 2.25s;
 }
 
 /* 身体成分指标位置 - 更靠近中心 */
@@ -343,21 +432,29 @@ svg { display: block; }
   border: 1px solid var(--hairline);
   border-radius: var(--radius-pill);
   white-space: nowrap;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   cursor: pointer;
   min-height: 48px;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
 }
 
 .member-chip:hover {
   border-color: var(--primary);
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+  transform: translateY(-5px) rotateX(-5deg) scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 102, 204, 0.2);
+  background: rgba(0, 102, 204, 0.02);
 }
 
 .member-chip.active {
   border-color: var(--primary);
   background: rgba(0, 102, 204, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 102, 204, 0.3);
+  transform: translateY(-3px) scale(1.02);
+}
+
+.member-chip:active {
+  transform: translateY(-2px) scale(0.98);
 }
 
 .member-avatar {

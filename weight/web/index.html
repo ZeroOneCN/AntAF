@@ -27,7 +27,9 @@
 
 <!-- 主画布：径向布局 -->
 <main class="board">
-
+  <!-- Three.js 背景 canvas -->
+  <canvas id="threeCanvas"></canvas>
+  
   <!-- 中心体重显示 -->
   <div class="center-weight">
     <div class="big-num" id="weightValue">--</div>
@@ -90,6 +92,7 @@
 <!-- 提示条 -->
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/static/js/bundle.js" defer></script>
 </body>
 </html>

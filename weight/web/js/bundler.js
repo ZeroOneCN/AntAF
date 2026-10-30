@@ -7,6 +7,7 @@ const files = [
   'render.js',
   'ws.js',
   'modal.js',
+  'three-effects.js',
   'main.js'
 ];
 

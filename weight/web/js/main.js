@@ -2,6 +2,7 @@ import { state } from "./state.js";
 import { renderAll } from "./render.js";
 import { connect, handleMessage, send, toast } from "./ws.js";
 import { openModal, closeModal, openUserModal, openAssignModal, openDeleteRecord, openDeleteUser } from "./modal.js";
+import { initThreeEffects } from "./three-effects.js";
 
 console.log("[main.js] Module loaded");
 
@@ -67,6 +68,18 @@ connect(onMessage, toastFn);
 
 document.addEventListener("DOMContentLoaded", () => {
   initElements();
+  
+  // 初始化 Three.js 动态效果
+  try {
+    if (typeof THREE !== 'undefined') {
+      initThreeEffects();
+      console.log('[Three.js] Dynamic effects initialized');
+    } else {
+      console.warn('[Three.js] Library not loaded, skipping 3D effects');
+    }
+  } catch (error) {
+    console.error('[Three.js] Failed to initialize:', error);
+  }
   
   // 模态框包装器函数
   function openUserModalFn(user) {
