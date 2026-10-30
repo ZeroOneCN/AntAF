@@ -76,6 +76,7 @@ export function drawBodyComposition() {
     document.getElementById("cardFat").hidden = true;
     document.getElementById("cardMuscle").hidden = true;
     document.getElementById("cardWater").hidden = true;
+    document.getElementById("metricsGrid").innerHTML = '<p class="drawer-empty">这条记录没有阻抗数据，暂无可估算的身体成分。</p>';
     return;
   }
 
@@ -146,7 +147,7 @@ function drawMetricsGrid(body) {
   });
 }
 
-export function drawMembers(el, send) {
+export function drawMembers(el, onChange) {
   el.innerHTML = "";
 
   if (!state.users.length) {
@@ -172,20 +173,16 @@ export function drawMembers(el, send) {
     chip.appendChild(info);
 
     chip.addEventListener("click", () => {
-      if (state.filterUser === user.id) {
-        state.filterUser = null;
-      } else {
-        state.filterUser = user.id;
-      }
-      drawMembers(el, send);
-      drawRecords(document.getElementById("recordList"), send);
+      state.filterUser = state.filterUser === user.id ? null : user.id;
+      state.selectedId = state.filterUser && latest ? latest.id : null;
+      onChange();
     });
 
     el.appendChild(chip);
   });
 }
 
-export function drawRecords(el, send) {
+export function drawRecords(el, onChange) {
   el.innerHTML = "";
 
   let records = [...state.records];
@@ -233,7 +230,7 @@ export function drawRecords(el, send) {
 
     row.addEventListener("click", () => {
       state.selectedId = rec.id;
-      drawRecords(el, send);
+      onChange();
     });
 
     el.appendChild(row);
@@ -241,25 +238,23 @@ export function drawRecords(el, send) {
 }
 
 export function drawStatus(el) {
-  const { connected, latency } = state.scale;
-
-  if (connected) {
+  if (state.connected) {
     el.wsPill.className = "pill pill-live";
-    el.wsText.textContent = `实时通道 · ${latency}ms`;
-    el.scalePill.className = "pill pill-ok";
-    el.scaleText.textContent = "秤已连接";
+    el.wsText.textContent = Number.isFinite(state.latency) ? `实时通道 · ${state.latency}ms` : "实时通道";
   } else {
     el.wsPill.className = "pill pill-idle";
     el.wsText.textContent = "连接中";
-    el.scalePill.className = "pill pill-err";
-    el.scaleText.textContent = "秤离线";
   }
+
+  el.scalePill.className = state.scale.connected ? "pill pill-ok" : "pill pill-err";
+  el.scaleText.textContent = state.scale.connected ? "秤已连接" : "秤离线";
 }
 
 export function renderAll(el) {
+  const refresh = () => renderAll(el);
   drawHero(el);
   drawBodyComposition();
-  drawMembers(document.getElementById("memberList"));
-  drawRecords(document.getElementById("recordList"));
+  drawMembers(document.getElementById("memberList"), refresh);
+  drawRecords(document.getElementById("recordList"), refresh);
   drawStatus(el);
 }

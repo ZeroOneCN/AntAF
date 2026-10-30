@@ -37,7 +37,11 @@ export function openUserModal(user, openModalFn, closeModalFn, modalLayer, modal
        </div></div>
      <p class="modal-note">身高 100–230 cm、年龄 10–100 岁。资料改变后，该成员名下记录的体成分会全部重算。</p>`,
     `<button class="btn btn-ghost" type="button" data-act="cancel">取消</button>
-      <button class="btn btn-primary" type="button" data-act="save">${isEdit ? "保存修改" : "创建成员"}</button>`
+      <button class="btn btn-primary" type="button" data-act="save">${isEdit ? "保存修改" : "创建成员"}</button>`,
+    modalLayer,
+    modalTitle,
+    modalBody,
+    modalFoot
   );
 
   let sex = v.sex === "female" ? "female" : "male";
@@ -92,7 +96,11 @@ export function openAssignModal(record, openModalFn, closeModalFn, modalLayer, m
        .join("")}
        <button type="button" data-pick="" style="--mc:#7a7a7a"><span class="face">×</span><span>取消归属</span></button>
      </div>`,
-    `<button class="btn btn-ghost" type="button" data-act="cancel">关闭</button>`
+    `<button class="btn btn-ghost" type="button" data-act="cancel">关闭</button>`,
+    modalLayer,
+    modalTitle,
+    modalBody,
+    modalFoot
   );
   modalBody.querySelectorAll("[data-pick]").forEach((node) =>
     node.addEventListener("click", () => {
@@ -111,7 +119,11 @@ export function openDeleteRecord(record, openModalFn, closeModalFn, modalLayer, 
       record.user_name ? ` · ${esc(record.user_name)}` : ""
     }<br>删除后不可恢复，趋势图与统计会同步更新。</p>`,
     `<button class="btn btn-ghost" type="button" data-act="cancel">取消</button>
-      <button class="btn btn-danger" type="button" data-act="ok">删除记录</button>`
+      <button class="btn btn-danger" type="button" data-act="ok">删除记录</button>`,
+    modalLayer,
+    modalTitle,
+    modalBody,
+    modalFoot
   );
   modalFoot.querySelector('[data-act="cancel"]').addEventListener("click", () => closeModalFn(modalLayer, modalBody, modalFoot));
   modalFoot.querySelector('[data-act="ok"]').addEventListener("click", () => {
@@ -131,7 +143,11 @@ export function openDeleteUser(user, openModalFn, closeModalFn, modalLayer, moda
         : "该成员还没有记录，删除不影响历史数据。"
     }</p>`,
     `<button class="btn btn-ghost" type="button" data-act="cancel">取消</button>
-      <button class="btn btn-danger" type="button" data-act="ok" ${count ? "disabled" : ""}>删除成员</button>`
+      <button class="btn btn-danger" type="button" data-act="ok" ${count ? "disabled" : ""}>删除成员</button>`,
+    modalLayer,
+    modalTitle,
+    modalBody,
+    modalFoot
   );
   modalFoot.querySelector('[data-act="cancel"]').addEventListener("click", () => closeModalFn(modalLayer, modalBody, modalFoot));
   const ok = modalFoot.querySelector('[data-act="ok"]');

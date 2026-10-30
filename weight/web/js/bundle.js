@@ -193,6 +193,7 @@ function drawBodyComposition() {
     document.getElementById("cardFat").hidden = true;
     document.getElementById("cardMuscle").hidden = true;
     document.getElementById("cardWater").hidden = true;
+    document.getElementById("metricsGrid").innerHTML = '<p class="drawer-empty">这条记录没有阻抗数据，暂无可估算的身体成分。</p>';
     return;
   }
 
@@ -263,7 +264,7 @@ function drawMetricsGrid(body) {
   });
 }
 
-function drawMembers(el, send) {
+function drawMembers(el, onChange) {
   el.innerHTML = "";
 
   if (!state.users.length) {
@@ -289,20 +290,16 @@ function drawMembers(el, send) {
     chip.appendChild(info);
 
     chip.addEventListener("click", () => {
-      if (state.filterUser === user.id) {
-        state.filterUser = null;
-      } else {
-        state.filterUser = user.id;
-      }
-      drawMembers(el, send);
-      drawRecords(document.getElementById("recordList"), send);
+      state.filterUser = state.filterUser === user.id ? null : user.id;
+      state.selectedId = state.filterUser && latest ? latest.id : null;
+      onChange();
     });
 
     el.appendChild(chip);
   });
 }
 
-function drawRecords(el, send) {
+function drawRecords(el, onChange) {
   el.innerHTML = "";
 
   let records = [...state.records];
@@ -350,7 +347,7 @@ function drawRecords(el, send) {
 
     row.addEventListener("click", () => {
       state.selectedId = rec.id;
-      drawRecords(el, send);
+      onChange();
     });
 
     el.appendChild(row);
@@ -358,26 +355,24 @@ function drawRecords(el, send) {
 }
 
 function drawStatus(el) {
-  const { connected, latency } = state.scale;
-
-  if (connected) {
+  if (state.connected) {
     el.wsPill.className = "pill pill-live";
-    el.wsText.textContent = `实时通道 · ${latency}ms`;
-    el.scalePill.className = "pill pill-ok";
-    el.scaleText.textContent = "秤已连接";
+    el.wsText.textContent = Number.isFinite(state.latency) ? `实时通道 · ${state.latency}ms` : "实时通道";
   } else {
     el.wsPill.className = "pill pill-idle";
     el.wsText.textContent = "连接中";
-    el.scalePill.className = "pill pill-err";
-    el.scaleText.textContent = "秤离线";
   }
+
+  el.scalePill.className = state.scale.connected ? "pill pill-ok" : "pill pill-err";
+  el.scaleText.textContent = state.scale.connected ? "秤已连接" : "秤离线";
 }
 
 function renderAll(el) {
+  const refresh = () => renderAll(el);
   drawHero(el);
   drawBodyComposition();
-  drawMembers(document.getElementById("memberList"));
-  drawRecords(document.getElementById("recordList"));
+  drawMembers(document.getElementById("memberList"), refresh);
+  drawRecords(document.getElementById("recordList"), refresh);
   drawStatus(el);
 }
 
@@ -535,7 +530,11 @@ function openUserModal(user, openModalFn, closeModalFn, modalLayer, modalTitle, 
        </div></div>
      <p class="modal-note">身高 100–230 cm、年龄 10–100 岁。资料改变后，该成员名下记录的体成分会全部重算。</p>`,
     `<button class="btn btn-ghost" type="button" data-act="cancel">取消</button>
-      <button class="btn btn-primary" type="button" data-act="save">${isEdit ? "保存修改" : "创建成员"}</button>`
+      <button class="btn btn-primary" type="button" data-act="save">${isEdit ? "保存修改" : "创建成员"}</button>`,
+    modalLayer,
+    modalTitle,
+    modalBody,
+    modalFoot
   );
 
   let sex = v.sex === "female" ? "female" : "male";
@@ -590,7 +589,11 @@ function openAssignModal(record, openModalFn, closeModalFn, modalLayer, modalTit
        .join("")}
        <button type="button" data-pick="" style="--mc:#7a7a7a"><span class="face">×</span><span>取消归属</span></button>
      </div>`,
-    `<button class="btn btn-ghost" type="button" data-act="cancel">关闭</button>`
+    `<button class="btn btn-ghost" type="button" data-act="cancel">关闭</button>`,
+    modalLayer,
+    modalTitle,
+    modalBody,
+    modalFoot
   );
   modalBody.querySelectorAll("[data-pick]").forEach((node) =>
     node.addEventListener("click", () => {
@@ -609,7 +612,11 @@ function openDeleteRecord(record, openModalFn, closeModalFn, modalLayer, modalTi
       record.user_name ? ` · ${esc(record.user_name)}` : ""
     }<br>删除后不可恢复，趋势图与统计会同步更新。</p>`,
     `<button class="btn btn-ghost" type="button" data-act="cancel">取消</button>
-      <button class="btn btn-danger" type="button" data-act="ok">删除记录</button>`
+      <button class="btn btn-danger" type="button" data-act="ok">删除记录</button>`,
+    modalLayer,
+    modalTitle,
+    modalBody,
+    modalFoot
   );
   modalFoot.querySelector('[data-act="cancel"]').addEventListener("click", () => closeModalFn(modalLayer, modalBody, modalFoot));
   modalFoot.querySelector('[data-act="ok"]').addEventListener("click", () => {
@@ -629,7 +636,11 @@ function openDeleteUser(user, openModalFn, closeModalFn, modalLayer, modalTitle,
         : "该成员还没有记录，删除不影响历史数据。"
     }</p>`,
     `<button class="btn btn-ghost" type="button" data-act="cancel">取消</button>
-      <button class="btn btn-danger" type="button" data-act="ok" ${count ? "disabled" : ""}>删除成员</button>`
+      <button class="btn btn-danger" type="button" data-act="ok" ${count ? "disabled" : ""}>删除成员</button>`,
+    modalLayer,
+    modalTitle,
+    modalBody,
+    modalFoot
   );
   modalFoot.querySelector('[data-act="cancel"]').addEventListener("click", () => closeModalFn(modalLayer, modalBody, modalFoot));
   const ok = modalFoot.querySelector('[data-act="ok"]');
@@ -830,11 +841,8 @@ function stopThreeEffects() {
 
 
 
-console.log("[main.js] Module loaded");
-
 const $ = (id) => document.getElementById(id);
 
-// 延迟获取元素，确保 DOM 已加载
 let el;
 
 function initElements() {
@@ -842,115 +850,77 @@ function initElements() {
     clockTime: $("clockTime"), clockDate: $("clockDate"),
     wsPill: $("wsPill"), wsText: $("wsText"), scalePill: $("scalePill"), scaleText: $("scaleText"),
     weightValue: $("weightValue"), weightTime: $("weightTime"),
-    memberList: $("memberList"), recordList: $("recordList"),
-    metricsDrawer: $("metricsDrawer"), drawerToggle: $("drawerToggle"),
+    memberList: $("memberList"), recordList: $("recordList"), addUserBtn: $("addUserBtn"),
+    metricsDrawer: $("metricsDrawer"), drawerToggle: $("drawerToggle"), themeToggle: $("themeToggle"),
     modalLayer: $("modalLayer"), modalTitle: $("modalTitle"), modalBody: $("modalBody"),
     modalFoot: $("modalFoot"), modalClose: $("modalClose"), toasts: $("toasts"),
   };
-  
-  console.log("[initElements] All elements initialized:", {
-    clockTime: !!el.clockTime,
-    clockDate: !!el.clockDate,
-    weightValue: !!el.weightValue,
-  });
 }
 
-/* ---------------- 页面杂项 ---------------- */
+function toastFn(level, text) {
+  toast(level, text, el.toasts);
+}
 
 function tickClock() {
   const now = new Date();
   const h = String(now.getHours()).padStart(2, "0");
   const m = String(now.getMinutes()).padStart(2, "0");
-  
-  console.log("[tickClock] clockTime:", el.clockTime, "clockDate:", el.clockDate);
-  
-  if (el.clockTime) {
-    el.clockTime.textContent = `${h}:${m}`;
-    console.log("[tickClock] Set clockTime to:", `${h}:${m}`);
-  } else {
-    console.error("[tickClock] el.clockTime is null!");
-  }
-  
-  if (el.clockDate) {
-    el.clockDate.textContent = `${now.getMonth() + 1}月${now.getDate()}日 周${
-      "日一二三四五六"[now.getDay()]
-    }`;
-    console.log("[tickClock] Set clockDate to:", el.clockDate.textContent);
-  } else {
-    console.error("[tickClock] el.clockDate is null!");
-  }
+  el.clockTime.textContent = `${h}:${m}`;
+  el.clockDate.textContent = `${now.getMonth() + 1}月${now.getDate()}日 周${"日一二三四五六"[now.getDay()]}`;
 }
 
-/* ---------------- WebSocket ---------------- */
+function applyTheme(theme, persist = false) {
+  const isDark = theme === "dark";
+  document.documentElement.dataset.theme = isDark ? "dark" : "light";
+  $("themeColor").content = isDark ? "#000000" : "#f5f5f7";
+  el.themeToggle.setAttribute("aria-pressed", String(isDark));
+  el.themeToggle.setAttribute("aria-label", isDark ? "切换浅色模式" : "切换深色模式");
+  el.themeToggle.title = isDark ? "切换浅色模式" : "切换深色模式";
+  if (persist) localStorage.setItem("antaf-theme", isDark ? "dark" : "light");
+}
+
+function setDrawerOpen(open) {
+  el.metricsDrawer.classList.toggle("open", open);
+  el.drawerToggle.classList.toggle("is-open", open);
+  el.metricsDrawer.setAttribute("aria-hidden", String(!open));
+  el.drawerToggle.setAttribute("aria-expanded", String(open));
+  el.drawerToggle.setAttribute("aria-label", open ? "收起详细指标" : "查看详细指标");
+  el.drawerToggle.title = open ? "收起详细指标" : "查看详细指标";
+}
 
 function onMessage(data) {
   handleMessage(data, toastFn);
   renderAll(el);
 }
 
-connect(onMessage, toastFn);
-
-/* ---------------- 启动 ---------------- */
-
 document.addEventListener("DOMContentLoaded", () => {
   initElements();
-  
-  // 初始化 Three.js 动态效果
-  try {
-    if (typeof THREE !== 'undefined') {
-      initThreeEffects();
-      console.log('[Three.js] Dynamic effects initialized');
-    } else {
-      console.warn('[Three.js] Library not loaded, skipping 3D effects');
-    }
-  } catch (error) {
-    console.error('[Three.js] Failed to initialize:', error);
-  }
-  
-  // 模态框包装器函数
-  function openUserModalFn(user) {
-    openUserModal(user, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot, toastFn);
-  }
+  applyTheme(document.documentElement.dataset.theme || "light");
 
-  function openAssignModalFn(record) {
-    openAssignModal(record, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot, toastFn);
-  }
+  el.themeToggle.addEventListener("click", () => {
+    applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+  });
 
-  function openDeleteRecordFn(record) {
-    openDeleteRecord(record, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot);
-  }
+  el.addUserBtn.addEventListener("click", () => {
+    openUserModal(null, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot, toastFn);
+  });
 
-  function openDeleteUserFn(user) {
-    openDeleteUser(user, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot);
-  }
+  el.drawerToggle.addEventListener("click", () => {
+    setDrawerOpen(!el.metricsDrawer.classList.contains("open"));
+  });
 
-  function toastFn(level, text) {
-    toast(level, text, el.toasts);
-  }
-  
-  // Drawer toggle
-  if (el.drawerToggle && el.metricsDrawer) {
-    el.drawerToggle.addEventListener("click", () => {
-      el.metricsDrawer.classList.toggle("open");
-    });
-
-    // Close drawer when clicking outside
-    document.addEventListener("click", (e) => {
-      if (!el.metricsDrawer.contains(e.target) && !el.drawerToggle.contains(e.target)) {
-        el.metricsDrawer.classList.remove("open");
-      }
-    });
-  }
-
-  // Escape key handler
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      if (!el.modalLayer.hidden) closeModal(el.modalLayer, el.modalBody, el.modalFoot);
-      if (el.metricsDrawer) el.metricsDrawer.classList.remove("open");
+  document.addEventListener("click", (event) => {
+    if (!el.metricsDrawer.contains(event.target) && !el.drawerToggle.contains(event.target)) {
+      setDrawerOpen(false);
     }
   });
 
-  // Visibility change handler
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (!el.modalLayer.hidden) closeModal(el.modalLayer, el.modalBody, el.modalFoot);
+    setDrawerOpen(false);
+  });
+
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
       tickClock();
@@ -958,17 +928,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Modal close handlers
   el.modalClose.addEventListener("click", () => closeModal(el.modalLayer, el.modalBody, el.modalFoot));
-  el.modalLayer.addEventListener("click", (e) => {
-    if (e.target === el.modalLayer) closeModal(el.modalLayer, el.modalBody, el.modalFoot);
+  el.modalLayer.addEventListener("click", (event) => {
+    if (event.target === el.modalLayer) closeModal(el.modalLayer, el.modalBody, el.modalFoot);
   });
 
+  try {
+    if (typeof THREE !== "undefined") initThreeEffects();
+  } catch (error) {
+    console.warn("3D 背景不可用，已保留基础仪表盘。", error);
+  }
+
+  connect(onMessage, toastFn);
   tickClock();
   setInterval(tickClock, 10_000);
   renderAll(el);
 });
 
-/* 调试入口 */
 window.__antaf = { push: onMessage, state, send };
 
