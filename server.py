@@ -372,7 +372,9 @@ async def index_handler(request: web.Request) -> web.FileResponse:
     Returns:
         首页文件响应。
     """
-    return web.FileResponse(WEB_DIR / "index.html")
+    return web.FileResponse(
+        WEB_DIR / "index.html", headers={"Cache-Control": "no-cache"}
+    )
 
 
 async def status_handler(request: web.Request) -> web.Response:

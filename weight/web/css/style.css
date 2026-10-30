@@ -746,8 +746,18 @@ svg { display: block; }
   transition: opacity 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
 
+.member-edit {
+  color: var(--primary);
+  background: rgba(0, 102, 204, 0.09);
+  opacity: 1;
+}
+
+[data-theme="dark"] .member-edit {
+  background: rgba(41, 151, 255, 0.16);
+}
+
 .member-edit + .member-remove {
-  margin-left: -6px;
+  margin-left: 2px;
 }
 
 .member-remove svg,
@@ -768,13 +778,13 @@ svg { display: block; }
 .member-edit:focus-visible {
   opacity: 1;
   color: var(--primary);
-  background: rgba(0, 102, 204, 0.1);
+  background: rgba(0, 102, 204, 0.16);
   outline: none;
 }
 
 [data-theme="dark"] .member-edit:hover,
 [data-theme="dark"] .member-edit:focus-visible {
-  background: rgba(41, 151, 255, 0.14);
+  background: rgba(41, 151, 255, 0.24);
 }
 
 .member-remove.is-blocked {
@@ -979,8 +989,8 @@ svg { display: block; }
   line-height: 1.6;
 }
 
-.drawer-records {
-  margin: var(--space-md) 0 0;
+.record-list.drawer-records {
+  margin: var(--space-lg) 0 0;
   padding: 0;
 }
 
@@ -1313,6 +1323,7 @@ svg { display: block; }
   .member-avatar { width: 40px; height: 40px; font-size: 17px; }
   .member-info b { font-size: 16px; }
   .member-info span { font-size: 12px; }
+  .member-info .member-time { display: none; }
   .member-add { min-height: 52px; padding: 0 14px; font-size: 15px; }
   .member-add span { display: none; }
 
@@ -1384,7 +1395,8 @@ svg { display: block; }
 
 @media (pointer: coarse) {
   .member-remove,
-  .member-edit { width: 44px; height: 44px; opacity: 0.7; }
+  .member-edit { width: 44px; height: 44px; }
+  .member-remove { opacity: 0.7; }
   .member-remove.is-blocked { opacity: 0.28; }
   .record-action { min-height: 44px; font-size: 15px; }
   .drawer-toggle { width: 60px; }
