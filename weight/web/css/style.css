@@ -724,7 +724,14 @@ svg { display: block; }
   color: var(--ink-muted-48);
 }
 
-.member-remove {
+.member-info .member-time {
+  display: inline;
+  font-size: inherit;
+  color: inherit;
+}
+
+.member-remove,
+.member-edit {
   width: 38px;
   height: 38px;
   flex: none;
@@ -739,7 +746,12 @@ svg { display: block; }
   transition: opacity 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
 
-.member-remove svg {
+.member-edit + .member-remove {
+  margin-left: -6px;
+}
+
+.member-remove svg,
+.member-edit svg {
   width: 19px;
   height: 19px;
 }
@@ -750,6 +762,19 @@ svg { display: block; }
   color: var(--bad);
   background: rgba(255, 59, 48, 0.1);
   outline: none;
+}
+
+.member-edit:hover,
+.member-edit:focus-visible {
+  opacity: 1;
+  color: var(--primary);
+  background: rgba(0, 102, 204, 0.1);
+  outline: none;
+}
+
+[data-theme="dark"] .member-edit:hover,
+[data-theme="dark"] .member-edit:focus-visible {
+  background: rgba(41, 151, 255, 0.14);
 }
 
 .member-remove.is-blocked {
@@ -1288,8 +1313,8 @@ svg { display: block; }
   .member-avatar { width: 40px; height: 40px; font-size: 17px; }
   .member-info b { font-size: 16px; }
   .member-info span { font-size: 12px; }
-  .member-add { min-height: 52px; padding: 0 16px; font-size: 15px; }
-  .member-add span { display: inline; }
+  .member-add { min-height: 52px; padding: 0 14px; font-size: 15px; }
+  .member-add span { display: none; }
 
   .drawer-toggle { width: 50px; height: 84px; right: 10px; }
   .drawer-toggle.is-open { right: 10px; }
@@ -1304,8 +1329,7 @@ svg { display: block; }
   .clock-time { font-size: 22px; }
   .clock-date { font-size: 11px; }
   .pill { padding: 5px 9px; font-size: 11px; }
-  .member-add { padding: 0 14px; }
-  .member-add span { display: none; }
+  .member-info .member-time { display: none; }
   .member-suggest .member-info span { font-size: 11px; }
 }
 
@@ -1359,7 +1383,8 @@ svg { display: block; }
 }
 
 @media (pointer: coarse) {
-  .member-remove { width: 44px; height: 44px; opacity: 0.7; }
+  .member-remove,
+  .member-edit { width: 44px; height: 44px; opacity: 0.7; }
   .member-remove.is-blocked { opacity: 0.28; }
   .record-action { min-height: 44px; font-size: 15px; }
   .drawer-toggle { width: 60px; }

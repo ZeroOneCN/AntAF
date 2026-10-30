@@ -194,7 +194,23 @@ export function drawMembers(el, actions) {
     const info = document.createElement("div");
     info.className = "member-info";
     const latest = state.records.find((record) => record.user_id === user.id);
-    info.innerHTML = `<b>${esc(user.name)}</b><span>${latest ? `${fmtWeight(latest.kg)} kg · ${fmtMoment(latest.ts)}` : "暂无记录"}</span>`;
+    info.innerHTML = `<b>${esc(user.name)}</b><span>${
+      latest
+        ? `${fmtWeight(latest.kg)} kg<span class="member-time"> · ${fmtMoment(latest.ts)}</span>`
+        : "暂无记录"
+    }</span>`;
+
+    const edit = document.createElement("button");
+    edit.className = "member-edit";
+    edit.type = "button";
+    edit.title = `编辑 ${user.name} 的资料`;
+    edit.setAttribute("aria-label", edit.title);
+    edit.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+    edit.addEventListener("click", (event) => {
+      event.stopPropagation();
+      actions.editUser(user);
+    });
 
     const remove = document.createElement("button");
     remove.className = "member-remove";
@@ -226,6 +242,7 @@ export function drawMembers(el, actions) {
 
     chip.appendChild(avatar);
     chip.appendChild(info);
+    chip.appendChild(edit);
     chip.appendChild(remove);
 
     chip.addEventListener("click", () => {

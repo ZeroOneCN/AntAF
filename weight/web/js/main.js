@@ -45,6 +45,9 @@ const actions = {
   deleteUser(user) {
     openDeleteUser(user, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot);
   },
+  editUser(user) {
+    openUserModal(user, openModal, closeModal, el.modalLayer, el.modalTitle, el.modalBody, el.modalFoot, toastFn);
+  },
   notify(level, text) {
     toastFn(level, text);
   },
